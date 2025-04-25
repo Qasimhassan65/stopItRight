@@ -1,11 +1,11 @@
-import { handleAudioUpload } from "../modules/audioUpload.js";
-import { handleItemContextMenu } from "../modules/contextMenu.js";
-import { handleDragStart, handleDragEnd } from "../modules/dragHandlers.js";
-import { handleEditModeButtonClick, handleSettingsButtonClick, handleSettingsCloseButtonClick, handleAddItemsButtonClick, handleAddItemsCloseButtonClick, handleSaveButtonClick, handleSaveCloseButtonClick, addTagOrSetting } from "../modules/editMode.js";
-import { handleSingleImageUpload, handleChangeImageUpload, handleImageUpload } from "../modules/imageUpload.js";
-import { handleResizeStart } from "../modules/resizeHandlers.js";
-import { handleButtonClick, handleDescriptionInput, handleDescriptionKeyDown, handleTitleInput, handleTitleKeyDown, btnOffHandler, btnOnHandler, btnBlackHandler, btnWhiteHandler } from "../modules/tooltip.js";
-import { playSound, pauseSound, hideScreen, handleDownScaling, handleUpScaling, handleElementClick, addItemOnScreen, disallowDelete } from "../modules/utils.js";
+import { handleAudioUpload } from "./modules/audioUpload.js";
+import { handleItemContextMenu } from "./modules/contextMenu.js";
+import { handleDragStart, handleDragEnd } from "./modules/dragHandlers.js";
+import { handleEditModeButtonClick, handleSettingsButtonClick, handleSettingsCloseButtonClick, handleAddItemsButtonClick, handleAddItemsCloseButtonClick, handleSaveButtonClick, handleSaveCloseButtonClick, addTagOrSetting } from "./modules/editMode.js";
+import { handleSingleImageUpload, handleChangeImageUpload, handleImageUpload } from "./modules/imageUpload.js";
+import { handleResizeStart } from "./modules/resizeHandlers.js";
+import { handleButtonClick, handleDescriptionInput, handleDescriptionKeyDown, handleTitleInput, handleTitleKeyDown, btnOffHandler, btnOnHandler, btnBlackHandler, btnWhiteHandler } from "./modules/tooltip.js";
+import { playSound, pauseSound, hideScreen, handleDownScaling, handleUpScaling, handleElementClick, addItemOnScreen, disallowDelete } from "./modules/utils.js";
 
 // ------------------ //
 //  HELPER FUNCTIONS  //
@@ -825,7 +825,7 @@ let isTooltipOpen = { value: false };
 let btnLastX = { value: 60 };
 let btnLastY = { value: 125 };
 let showTooltip = { value: true };
-let btnSrc = { value: "assets/infoDark.webp" };
+let btnSrc = { value: "./assets/infoDark.webp" };
 
 const gameTooltip = document.getElementById("gameTooltip");
 

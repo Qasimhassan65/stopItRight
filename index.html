@@ -27,11 +27,11 @@
         height="1024"></canvas>
 
       <!-- Background -->
-      <img id="background" style="position: absolute; left: 0px; top: 0px" src="assets/background.png"
+      <img id="background" style="position: absolute; left: 0px; top: 0px" src="./assets/background.png"
         style="z-index: 9" width="1024" height="1024" />
 
       <!-- Information Screen -->
-      <img id="gameTooltip" src="assets/instructionsTemplate.webp"
+      <img id="gameTooltip" src="./assets/instructionsTemplate.webp"
         style="position: absolute; left: 0px; top: 0px; z-index: 0; display: none" width="1024" height="1024" />
 
       <!-- Title -->
@@ -48,26 +48,26 @@
         There are some words with empty blanks that you have to fill</div>
 
       <!-- Refresh Button -->
-      <img id="refreshBtn" src="../assets/images/refreshButton.webp"
+      <img id="refreshBtn" src="./assets/images/refreshButton.webp"
         style="position: absolute; left: -90px; top: 50px; cursor: pointer; z-index: 4001; display: none" width="60"
         height="60" />
 
       <!-- Edit Mode Button -->
-      <img id="editModeBtn" src="../assets/images/editButton.webp"
+      <img id="editModeBtn" src="./assets/images/editButton.webp"
         style="position: absolute; left: -90px; top: 150px; cursor: pointer; z-index: 4001" width="60" height="60" />
 
       <!--  Settings Button -->
-      <img id="settingsBtn" src="../assets/images/settingsButton.webp"
+      <img id="settingsBtn" src="./assets/images/settingsButton.webp"
         style="position: absolute; left: -90px; top: 250px; cursor: pointer; z-index: 4001; display: none" width="60"
         height="60" />
 
       <!-- Add Button -->
-      <img id="addItemsBtn" src="../assets/images/addButton.webp"
+      <img id="addItemsBtn" src="./assets/images/addButton.webp"
         style="position: absolute; left: -90px; top: 350px; cursor: pointer; z-index: 4001; display: none" width="60"
         height="60" />
 
       <!--  Delete Button -->
-      <img id="deleteBtn" src="../assets/images/deleteButton.webp"
+      <img id="deleteBtn" src="./assets/images/deleteButton.webp"
         style="position: absolute; left: -90px; top: 450px; cursor: pointer; z-index: 9999; display: none" width="60"
         height="60" />
       <div id="binTooltipRectangle"
@@ -78,7 +78,7 @@
         Drop an element on the bin to delete it!</div>
 
       <!--  Save Button -->
-      <img id="saveBtn" src="../assets/images/saveButton.webp"
+      <img id="saveBtn" src="./assets/images/saveButton.webp"
         style="position: absolute; left: -90px; top: 550px; cursor: pointer; z-index: 4001; display: none" width="60"
         height="60" />
 
@@ -351,7 +351,7 @@
           <div class="sound-effect-row">
             <h2 class="sound-effect-label">Item Click</h2>
             <div class="sound-effect-controls">
-              <audio id="audioElement2" src="assets/audio/collect.mp3" controls class="sound-effect-audio"></audio>
+              <audio id="audioElement2" src="./assets/audios/collect.mp3" controls class="sound-effect-audio"></audio>
               <label for="audioInput2" class="custom-button" style="margin-left: 52%; margin-top: 10px">Upload
                 Sound</label>
               <input type="file" id="audioInput2" accept="audio/*" style="display: none" />
@@ -361,7 +361,7 @@
           <div class="sound-effect-row">
             <h2 class="sound-effect-label">Win</h2>
             <div class="sound-effect-controls">
-              <audio id="audioElement3" src="assets/audio/win2.mp3" controls class="sound-effect-audio"></audio>
+              <audio id="audioElement3" src="./assets/audios/win2.mp3" controls class="sound-effect-audio"></audio>
               <label for="audioInput3" class="custom-button" style="margin-left: 52%; margin-top: 10px">Upload
                 Sound</label>
               <input type="file" id="audioInput3" accept="audio/*" style="display: none" />
@@ -468,11 +468,11 @@
         Changes</button>
 
       <!-- Audios -->
-      <audio preload="auto" id="collectSound" src="assets/audio/collect.mp3"></audio>
-      <audio preload="auto" id="winSound" src="assets/audio/win2.mp3"></audio>
-      <audio preload="auto" id="wrongSound" src="../assets/audios/wrong.mp3"></audio>
-      <audio preload="auto" id="clickSound" src="assets/audio/click.mp3"></audio>
-      <audio preload="auto" id="deleteSound" src="../assets/audios/delete.mp3"></audio>
+      <audio preload="auto" id="collectSound" src="./assets/audios/collect.mp3"></audio>
+      <audio preload="auto" id="winSound" src="./assets/audios/win2.mp3"></audio>
+      <audio preload="auto" id="wrongSound" src="./assets/audios/wrong.mp3"></audio>
+      <audio preload="auto" id="clickSound" src="./assets/audios/click.mp3"></audio>
+      <audio preload="auto" id="deleteSound" src="./assets/audios/delete.mp3"></audio>
     </div>
   </div>
 
@@ -710,14 +710,14 @@
   </script>
 
   <script src="script.js" type="module"></script>
-  <script src="../modules/audioUpload.js" type="module"></script>
-  <script src="../modules/contextMenu.js" type="module"></script>
-  <script src="../modules/dragHandlers.js" type="module"></script>
-  <script src="../modules/editMode.js" type="module"></script>
-  <script src="../modules/imageUpload.js" type="module"></script>
-  <script src="../modules/resizeHandlers.js" type="module"></script>
-  <script src="../modules/tooltip.js" type="module"></script>
-  <script src="../modules/utils.js" type="module"></script>
+  <script src="./modules/audioUpload.js" type="module"></script>
+  <script src="./modules/contextMenu.js" type="module"></script>
+  <script src="./modules/dragHandlers.js" type="module"></script>
+  <script src="./modules/editMode.js" type="module"></script>
+  <script src="./modules/imageUpload.js" type="module"></script>
+  <script src="./modules/resizeHandlers.js" type="module"></script>
+  <script src="./modules/tooltip.js" type="module"></script>
+  <script src="./modules/utils.js" type="module"></script>
 </body>
 
 </html>
