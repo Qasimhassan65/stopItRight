@@ -42,6 +42,84 @@ import { playSound, pauseSound, hideScreen, handleDownScaling, handleUpScaling, 
 //   }
 // };
 
+function generateRandomWordItems(items, itemDivs, isItemCollected, wordItemCount) {
+  const selectedIndices = [];
+  const wordsContainer = document.getElementById("words-container");
+
+  // Clear existing content
+  wordsContainer.innerHTML = "";
+
+  // Determine the number of items to select (min between wordItemCount and dictionary length)
+  const maxItems = Math.min(wordItemCount, gameDictionary.length);
+
+  // Randomly select unique indices up to maxItems
+  while (selectedIndices.length < maxItems) {
+    const randomIndex = Math.floor(Math.random() * gameDictionary.length);
+    if (!selectedIndices.includes(randomIndex)) {
+      selectedIndices.push(randomIndex);
+    }
+  }
+
+  // console.log("Selected indices:", selectedIndices);
+
+  // Generate HTML for selected items
+  selectedIndices.forEach((dictIndex, arrayIndex) => {
+    const item = gameDictionary[dictIndex];
+    const index = arrayIndex + 1; // For HTML IDs (1-based)
+    // Dynamic positioning based on index
+    const leftPos = (index - 1) % 4 === 0 ? 20 : 400; // Example: alternate positions
+    const topPos = Math.floor((index - 1) / 4) * 200 + 20; // Stack vertically every 4 items
+
+    const itemHtml = `
+          <div id="wordscontainerdivItem${index}" style="position: absolute; left: ${leftPos}px; top: ${topPos}px; display: inline-block">
+              <div id="resizeBox${index}TL" 
+                  style="position: absolute; left: -6px; top: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
+              </div>
+              <div id="resizeBox${index}TR" 
+                  style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
+              </div>
+              <div id="resizeBox${index}BL" 
+                  style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
+              </div>
+              <div id="resizeBox${index}BR" 
+                  style="position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
+              </div>
+              <div id="wordscontaineritem${index}" class="word-item">
+                  <img id="worditem${index}Image" src="${item.imagePath}" />
+                  <span id="worditem${index}Text">${item.text}</span>
+              </div>
+          </div>
+      `;
+
+
+
+    // Append to container
+    wordsContainer.insertAdjacentHTML('beforeend', itemHtml);
+
+    // Add to arrays
+    items.push(document.getElementById(`wordscontaineritem${index}`));
+    itemDivs.push(document.getElementById(`wordscontainerdivItem${index}`));
+    isItemCollected.push(false);
+
+    // Add drag event listeners to the container div
+    const itemDiv = document.getElementById(`wordscontainerdivItem${index}`);
+    // Add drag event listeners to the container div
+    itemDiv.setAttribute("draggable", "true");
+    itemDiv.addEventListener("dragstart", (e) => {
+      if (isEditing?.value || gameWon) return;
+      console.log(`Dragging started for letter container: ${letter}`);
+      e.dataTransfer.setData("text/plain", `lettercontainer${index + 1}`);
+      itemDiv.classList.add("dragging");
+    });
+    itemDiv.addEventListener("dragend", (e) => {
+      console.log(`Dragging ended for letter container: ${letter}`);
+      itemDiv.classList.remove("dragging");
+    });
+  });
+
+  return selectedIndices;
+}
+
 // ---------------- //
 // Arrange Word Items//
 // ---------------- //
@@ -89,7 +167,6 @@ const generateAlphabetItems = (items, itemDivs, isItemCollected) => {
   if (!Array.isArray(itemDivs)) itemDivs = [document.getElementById("btnDiv")].filter(Boolean);
   if (!Array.isArray(isItemCollected)) isItemCollected = [];
 
-  const alphabet = Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i));
   const alphabetContainer = document.getElementById("alphabet-container");
 
   if (!alphabetContainer) {
@@ -107,7 +184,7 @@ const generateAlphabetItems = (items, itemDivs, isItemCollected) => {
   const lastRowWidth = (lettersInLastRow - 1) * xSpacing + 56;
   const leftOffset = (fullRowWidth - lastRowWidth) / 2;
 
-  alphabet.forEach((letter, index) => {
+  letterlist.forEach((letter, index) => {
     let xPos = startX + (index % maxPerRow) * xSpacing;
     const yPos = startY + Math.floor(index / maxPerRow) * ySpacing;
     if (index >= 20) xPos += leftOffset;
@@ -154,28 +231,50 @@ const generateAlphabetItems = (items, itemDivs, isItemCollected) => {
     letterText.id = `alphabetitem${index + 1}Text`;
     letterText.textContent = letter;
     letterText.style.fontFamily = "'Comfortaa'";
-    
+
     letterItem.appendChild(letterText);
     itemDiv.appendChild(letterItem);
     alphabetContainer.appendChild(itemDiv);
+    lettercounter++;
 
     try {
-      items.push(letterItem);
-      itemDivs.push(itemDiv);
+      items.push(letterItem); // Only push letterItem to items
+      itemDivs.push(itemDiv); // Only push itemDiv to itemDivs
       isItemCollected.push(false);
 
+      // Add drag event listeners to letterItem for gameplay dragging
       letterItem.addEventListener("dragstart", (e) => {
         if (isEditing?.value || gameWon) return;
-        console.log(`Dragging started for letter: ${letter}`);
-        e.dataTransfer.setData("text/plain", letter);
+        e.dataTransfer.setData("text/plain", letter.toUpperCase());
         letterItem.classList.add("dragging");
       });
 
       letterItem.addEventListener("dragend", (e) => {
-        console.log(`Dragging ended for letter: ${letter}`);
-        letterItem.classList.remove("dragging");
+        letterItem.classList进步("dragging");
       });
 
+      // Add contextmenu listener for letterItem
+      letterItem.addEventListener("contextmenu", (e) => {
+        currentItemCM = index + 1;
+        handleItemContextMenu(e, { isEditing, contextMenu, changeImageBtn });
+      });
+
+      // Add drag listeners for editing mode using addDragListenersToAllItems
+      const dragParams = {
+        isDragging,
+        isResizing,
+        savedX,
+        savedY,
+        allowItemMove,
+        teleporationFix,
+        deltaX,
+        deltaY,
+        isEditing,
+        isTooltipOpen,
+        btnLastX,
+        btnLastY
+      };
+      addDragListenersToAllItems([itemDiv], dragParams);
     } catch (error) {
       console.error(`Error adding letter ${letter} to arrays:`, error);
     }
@@ -220,7 +319,6 @@ const createBlanksInWords = () => {
     const blankPositions = [];
     const validPositions = wordChars
       .map((char, idx) => ({ char, idx }))
-      .filter(({ char }) => /[a-zA-Z]/.test(char))
       .map(({ idx }) => idx);
 
     if (validPositions.length === 0) {
@@ -258,63 +356,51 @@ const createBlanksInWords = () => {
 
     totalBlanks += blankPositions.length;
 
-    console.log(`Updated word: ${originalWord} -> ${newText}`);
-    console.log(`Blank positions: ${blankPositions}, Expected letters: ${expectedLetters}`);
+    //console.log(`Updated word: ${originalWord} -> ${newText}`);
+    //console.log(`Blank positions: ${blankPositions}, Expected letters: ${expectedLetters}`);
   });
 
   remainingItems = totalBlanks;
   itemsLeftNumber.innerHTML = remainingItems;
-  console.log(`Total blanks set: ${remainingItems}`);
+  //console.log(`Total blanks set: ${remainingItems}`);
 
   return blanksData;
 };
 
 // ---------------- //
-// CLEAR   BLANKS //
-// ---------------- //
-const clearBlanksInWords = () => {
-  const wordSpans = document.querySelectorAll('[id^="worditem"][id$="Text"]');
-  wordSpans.forEach((wordSpan, i) => {
-    if (!wordSpan) {
-      console.warn(`Word span at index ${i} is null or undefined.`);
-      return;
-    }
-
-    const wordContainer = wordSpan.closest('[id^="wordscontainerdivItem"]');
-    if (!wordContainer || wordContainer.style.display === "none") {
-      return;
-    }
-
-    const originalWord = wordSpan.textContent.replace(/_/g, ''); // Remove existing blanks
-    if (!originalWord) {
-      console.warn(`Text content for word span at index ${i} is empty.`);
-      return;
-    }
-
-    wordSpan.textContent = originalWord;
-    console.log(`Cleared blanks for word: ${originalWord}`);
-  });
-
-  console.log(wordSpans) ;
-};
-
-// ---------------- //
-// HANDLE DRAG AND DROP FOR LETTERS //
+// HANDLE DRAG AND DROP//
 // ---------------- //
 const setupDragAndDrop = (items, blanksData) => {
   const wordsContainer = document.getElementById("words-container");
 
-  wordsContainer.addEventListener("dragover", (e) => {
+  // Define the handlers
+  const dragOverHandler = (e) => {
     e.preventDefault();
-  });
+  };
 
-  wordsContainer.addEventListener("drop", (e) => {
+  const dropHandler = (e) => {
     e.preventDefault();
     if (isEditing?.value || gameWon) return;
 
-    const letter = e.dataTransfer.getData("text/plain");
+    let letter = e.dataTransfer.getData("text/plain");
     const dropX = e.clientX;
     const dropY = e.clientY;
+
+    // Check if the letter is a container ID (e.g., "lettercontainer2")
+    if (letter.startsWith("lettercontainer")) {
+      // Extract the index from the container ID (e.g., "2" from "lettercontainer2")
+      const index = parseInt(letter.replace("lettercontainer", ""), 10);
+      // Get the corresponding letter text element (e.g., "alphabetitem2Text")
+      const letterTextElement = document.getElementById(`alphabetitem${index}Text`);
+      if (letterTextElement) {
+        letter = letterTextElement.textContent.toUpperCase(); // Get the letter (e.g., "B")
+      } else {
+        console.warn(`Letter text element for ${letter} not found`);
+        playSound(wrongSound);
+        showFeedback(false);
+        return;
+      }
+    }
 
     // Get all word spans
     const wordSpans = document.querySelectorAll('[id^="worditem"][id$="Text"]');
@@ -375,16 +461,20 @@ const setupDragAndDrop = (items, blanksData) => {
     for (let i = 0; i < blankPositions.length; i++) {
       const pos = blankPositions[i];
       if (wordChars[pos] !== "_") continue;
-
       const expectedLetter = wordData.expectedLetters[i];
+      console.log(`letter: ${letter}, expectedLetter: ${expectedLetter}`);
       if (letter === expectedLetter) {
-        wordChars[pos] = letter.toLowerCase();
+        console.log(`Letter ${letter} matched at position ${pos} in word ${wordData.originalWord}`);
+        wordChars[pos] = wordData.originalWord[pos]; // Use original word's letter to preserve case
         closestSpan.textContent = wordChars.join("");
         remainingItems--;
         itemsLeftNumber.innerHTML = remainingItems;
         console.log(`Remaining items: ${remainingItems}`);
         playSound(collectSound);
+        console.log(`before ${filled}`);
+        filled = true;
         showFeedback(true);
+        console.log(`after ${filled}`);
 
         if (remainingItems === 0) {
           winSound.play();
@@ -392,17 +482,99 @@ const setupDragAndDrop = (items, blanksData) => {
           gameWon = true;
         }
 
-        filled = true;
-        break;
+        return;
       }
     }
 
+    console.log(filled);
     if (!filled) {
+      console.log("hi");
       playSound(wrongSound);
       showFeedback(false);
     }
-  });
+  };
+
+  // Add the event listeners and store the handlers
+  wordsContainer.addEventListener("dragover", dragOverHandler);
+  wordsContainer.addEventListener("drop", dropHandler);
+
+  currentDragOverHandler = dragOverHandler;
+  currentDropHandler = dropHandler;
 };
+
+
+function addDragListenersToAllItems(itemDivs, params) {
+  itemDivs.forEach((div, index) => {
+    if (div && !div.id.includes("btnDiv")) { // Exclude tooltip button
+      div.addEventListener("mousedown", (e) => {
+        if (params.isTooltipOpen.value || !params.isEditing.value) return;
+        handleDragStart(e, {
+          i: index,
+          targetDiv: div,
+          isDragging: params.isDragging,
+          isResizing: params.isResizing,
+          gameWon,
+          savedX: params.savedX,
+          savedY: params.savedY,
+          allowItemMove: params.allowItemMove,
+          teleporationFix: params.teleporationFix,
+          deltaX: params.deltaX,
+          deltaY: params.deltaY,
+          isEditing: params.isEditing,
+          type: "item",
+          placeBack: true,
+          btnLastX: params.btnLastX,
+          btnLastY: params.btnLastY
+        });
+      });
+
+      div.addEventListener("mouseup", (e) => {
+        if (params.isTooltipOpen.value || !params.isEditing.value) return;
+        handleDragEnd(e, {
+          i: index,
+          targetDiv: div,
+          isDragging: params.isDragging,
+          isResizing: params.isResizing,
+          gameWon,
+          savedX: params.savedX,
+          savedY: params.savedY,
+          allowItemMove: params.allowItemMove,
+          teleporationFix: params.teleporationFix,
+          deltaX: params.deltaX,
+          deltaY: params.deltaY,
+          isEditing: params.isEditing,
+          type: "item",
+          placeBack: true,
+          btnLastX: params.btnLastX,
+          btnLastY: params.btnLastY
+        });
+      });
+
+      div.addEventListener("click", () =>
+        handleElementClick({
+          currSelectedElement,
+          element: div,
+          isEditing: params.isEditing,
+          isTooltipOpen: params.isTooltipOpen
+        })
+      );
+
+      const innerItem = div.querySelector(`[id^="wordscontaineritem"], [id^="alphabetcontaineritem"]`);
+      if (innerItem) {
+        innerItem.addEventListener("contextmenu", (e) => {
+          currentItemCM = index;
+          handleItemContextMenu(e, {
+            isEditing: params.isEditing,
+            contextMenu,
+            changeImageBtn
+          });
+        });
+      }
+    }
+  });
+}
+
+
 
 // Helper: Show feedback
 function showFeedback(isCorrect) {
@@ -410,15 +582,35 @@ function showFeedback(isCorrect) {
   feedback.className = `feedback ${isCorrect ? "correct" : "wrong"}`;
   feedback.textContent = isCorrect ? "✓ Right Answer" : "✗ Wrong Answer";
 
-  // Fixed positioning
-  feedback.style.position = "fixed";
-  feedback.style.top = "165px";
-  feedback.style.left = "575px";
-  feedback.style.zIndex = "9999";
+  // --- Positioning relative to the game-container, above words-container ---
+  // Find the game container (assuming it's the parent of both h1 and words-container)
+  const gameContainer = document.querySelector(".game-container");
 
-  document.body.appendChild(feedback);
+  if (gameContainer) {
+    // Position the feedback absolutely within the game-container
+    feedback.style.position = "absolute";
+    feedback.style.top = "100px"; // Estimated position below the h1 and its margin
+    feedback.style.right = "20px"; // Distance from the right edge of the game-container (adjusting for padding)
+    feedback.style.zIndex = "9999"; // Ensure it's above other elements
+
+    // Append the feedback to the game container
+    gameContainer.appendChild(feedback);
+  } else {
+    // Fallback to fixed positioning if game-container is not found
+    console.warn("Game container not found, using fixed positioning for feedback.");
+    feedback.style.position = "fixed";
+    feedback.style.top = "160px";
+    feedback.style.left = "525px";
+    feedback.style.zIndex = "9999";
+    document.body.appendChild(feedback);
+  }
+  // -------------------------------------------------------------------------
+
+  // Remove the feedback after 2 seconds
   setTimeout(() => feedback.remove(), 2000);
 }
+
+
 
 // ---------------- //
 //  ITEMS ADDITION  //
@@ -469,6 +661,12 @@ const handleAddItems = async (existingImg, imgScale) => {
 
 export const addWordItemOnScreen = (params) => {
   return new Promise((resolve) => {
+    // Add the new word to gameDictionary
+    gameDictionary.push({
+      text: params.wordName,
+      imagePath: params.addableImg.src
+    });
+
     let latestItem = params.items.length;
     params.isAddingItems.value = false;
     hideScreen(params.itemsAdditionScreen);
@@ -565,21 +763,125 @@ export const addWordItemOnScreen = (params) => {
   });
 };
 
+export const addLetterItemOnScreen = (params) => {
+  return new Promise((resolve) => {
+    const letter = params.letterName.toUpperCase();
+
+    // Add the new letter to letterlist if not already present
+    if (!letterlist.includes(letter)) {
+      letterlist.push(letter);
+    }
+
+    let latestItem = lettercounter + 1;
+    lettercounter++;
+    params.isAddingItems.value = false;
+    hideScreen(params.itemsAdditionScreen);
+
+    const alphabetContainer = document.getElementById("alphabet-container");
+    if (!alphabetContainer) {
+      console.error("Alphabet container not found.");
+      resolve();
+      return;
+    }
+
+    const div = document.createElement("span");
+    div.id = `alphabetcontainerdivItem${latestItem}`;
+    div.style.cssText = `
+      position: absolute;
+      left: 60px;
+      top: 200px;
+      display: inline-block;
+    `;
+
+    const corners = [
+      { id: 'TL', style: 'left: -6px; top: -6px; cursor: nwse-resize;' },
+      { id: 'TR', style: 'right: -6px; top: -6px; cursor: nesw-resize;' },
+      { id: 'BL', style: 'left: -6px; bottom: -6px; cursor: nesw-resize;' },
+      { id: 'BR', style: 'right: -6px; bottom: -6px; cursor: nwse-resize;' },
+    ];
+
+    corners.forEach(corner => {
+      const resizeBox = document.createElement("span");
+      resizeBox.id = `resizeBox${latestItem}${corner.id}`;
+      resizeBox.style.cssText = `
+        position: absolute;
+        ${corner.style}
+        width: 14px;
+        height: 14px;
+        visibility: hidden;
+        border-radius: 100%;
+        background-color: white;
+        border: 1px solid red;
+        z-index: 99999999;
+      `;
+      div.appendChild(resizeBox);
+      params.resizeBoxes.push(resizeBox);
+    });
+
+    const letterItem = document.createElement("span");
+    letterItem.id = `alphabetcontaineritem${latestItem}`;
+    letterItem.className = "letter";
+    letterItem.setAttribute("draggable", "true");
+
+    const letterText = document.createElement("span");
+    letterText.id = `alphabetitem${latestItem}Text`;
+    letterText.textContent = letter;
+    letterText.style.fontFamily = "'Comfortaa'";
+
+    letterItem.appendChild(letterText);
+    div.appendChild(letterItem);
+    alphabetContainer.appendChild(div);
+
+    params.items.push(letterItem);
+    params.itemDivs.push(div);
+    params.isItemCollected.push(false);
+
+    div.addEventListener("mousedown", (e) => {
+      if (params.isTooltipOpen.value || !params.isEditing.value) return;
+      handleDragStart(e, { i: latestItem, targetDiv: div, isDragging: params.isDragging, isResizing: params.isResizing, gameWon, savedX: params.savedX, savedY: params.savedY, allowItemMove: params.allowItemMove, teleporationFix: params.teleporationFix, deltaX: params.deltaX, deltaY: params.deltaY, isEditing: params.isEditing, type: "item", placeBack: true, btnLastX: params.btnLastX, btnLastY: params.btnLastY });
+    });
+
+    div.addEventListener("mouseup", (e) => {
+      if (params.isTooltipOpen.value || !params.isEditing.value) return;
+      handleDragEnd(e, { i: latestItem, targetDiv: div, isDragging: params.isDragging, isResizing: params.isResizing, gameWon, savedX: params.savedX, savedY: params.savedY, allowItemMove: params.allowItemMove, teleporationFix: params.teleporationFix, deltaX: params.deltaX, deltaY: params.deltaY, isEditing: params.isEditing, type: "item", placeBack: true, btnLastX: params.btnLastX, btnLastY: params.btnLastY });
+    });
+
+    div.addEventListener("click", () => handleElementClick({ currSelectedElement, element: div, isEditing: params.isEditing, isTooltipOpen: params.isTooltipOpen }));
+
+    letterItem.addEventListener("dragstart", (e) => {
+      if (params.isEditing?.value || gameWon) return;
+      e.dataTransfer.setData("text/plain", letter.toUpperCase());
+      letterItem.classList.add("dragging");
+    });
+
+    letterItem.addEventListener("dragend", (e) => {
+      letterItem.classList.remove("dragging");
+    });
+
+    letterItem.addEventListener("contextmenu", (e) => {
+      currentItemCM = latestItem;
+      handleItemContextMenu(e, { isEditing: params.isEditing, contextMenu, changeImageBtn });
+    });
+
+    resolve();
+  });
+};
+
 
 
 // ---------------- //
 //  ITEMS DELETION  //
 // ---------------- //
-const deleteItem = (index) => {
-  delItemCount++;
-  delItems.push(itemDivs[index]);
+// const deleteItem = (index) => {
+//   delItemCount++;
+//   delItems.push(itemDivs[index]);
 
-  itemDivs[index].style.display = "none";
+//   itemDivs[index].style.display = "none";
 
-  for (let i = 0; i < 4; i++) {
-    resizeBoxes[index * 4 + i].style.display = "none";
-  }
-};
+//   for (let i = 0; i < 4; i++) {
+//     resizeBoxes[index * 4 + i].style.display = "none";
+//   }
+// };
 
 const getDraggedItemIndex = () => {
   // Get the item being dragged
@@ -595,43 +897,102 @@ const getDraggedItemIndex = () => {
   return null;
 };
 
+// const handleDeleteBtnMouseUp = () => {
+//   // Nothing is being dragged || Something is being resized || The tooltip button is being moved || Only one item is left
+//   if (!isDragging.value || isResizing.value || allowItemMove[0] || remainingItems === 1) {
+//     playSound(wrongSound);
+
+//     // The bin was just simply clicked
+//     if (!isDragging.value) {
+//       binTooltip.style.display = binTooltipRectangle.style.display = "block";
+
+//       setTimeout(() => {
+//         binTooltip.style.display = binTooltipRectangle.style.display = "none";
+//       }, 5000);
+//     }
+
+//     // The game tooltip btn was being moved
+//     else if (allowItemMove[0]) {
+//       disallowDelete({ targetDiv: btnDiv, lastX: btnLastX, lastY: btnLastY, i: 0, type: "button", isDragging, savedX, savedY, allowItemMove });
+//     }
+
+//     // Only one item is left
+//     else if (remainingItems === 1) {
+//       let itemIndex = getDraggedItemIndex();
+//       disallowDelete({ targetDiv: itemDivs[itemIndex], lastX: savedX, lastY: savedY, i: itemIndex, type: "item", isDragging, savedX, savedY, allowItemMove });
+//     }
+
+//     return;
+//   }
+
+//   // Get the item being dragged
+//   let targetIndex = getDraggedItemIndex();
+
+//   // Delete it now
+//   playSound(deleteSound);
+//   deleteItem(targetIndex);
+
+//   remainingItems -= 1;
+//   itemsLeftNumber.innerHTML = remainingItems;
+// };
+
+// Modified deleteItem function to handle all items
+const deleteItem = (index) => {
+  if (index < 0 || index >= items.length) return;
+
+  delItemCount++;
+  delItems.push(itemDivs[index]);
+
+  // Hide the item and its container
+  itemDivs[index].style.display = "none";
+  items[index].style.display = "none";
+
+  // Hide associated resize boxes
+  for (let i = 0; i < 4; i++) {
+    resizeBoxes[index * 4 + i].style.display = "none";
+  }
+
+  // Update collection state
+  isItemCollected[index] = true; // Mark as collected to prevent interactions
+};
+
+// Updated handleDeleteBtnMouseUp to handle all draggable items
 const handleDeleteBtnMouseUp = () => {
-  // Nothing is being dragged || Something is being resized || The tooltip button is being moved || Only one item is left
-  if (!isDragging.value || isResizing.value || allowItemMove[0] || remainingItems === 1) {
+  if (!isDragging.value || isResizing.value) {
     playSound(wrongSound);
-
-    // The bin was just simply clicked
-    if (!isDragging.value) {
-      binTooltip.style.display = binTooltipRectangle.style.display = "block";
-
-      setTimeout(() => {
-        binTooltip.style.display = binTooltipRectangle.style.display = "none";
-      }, 5000);
-    }
-
-    // The game tooltip btn was being moved
-    else if (allowItemMove[0]) {
-      disallowDelete({ targetDiv: btnDiv, lastX: btnLastX, lastY: btnLastY, i: 0, type: "button", isDragging, savedX, savedY, allowItemMove });
-    }
-
-    // Only one item is left
-    else if (remainingItems === 1) {
-      let itemIndex = getDraggedItemIndex();
-      disallowDelete({ targetDiv: itemDivs[itemIndex], lastX: savedX, lastY: savedY, i: itemIndex, type: "item", isDragging, savedX, savedY, allowItemMove });
-    }
-
+    binTooltip.style.display = binTooltipRectangle.style.display = "block";
+    setTimeout(() => {
+      binTooltip.style.display = binTooltipRectangle.style.display = "none";
+    }, 5000);
     return;
   }
 
-  // Get the item being dragged
-  let targetIndex = getDraggedItemIndex();
+  const targetIndex = getDraggedItemIndex();
+  if (targetIndex === null || targetIndex === 0) { // Prevent deleting the tooltip button (index 0)
+    playSound(wrongSound);
+    disallowDelete({
+      targetDiv: itemDivs[targetIndex] || btnDiv,
+      lastX: targetIndex === 0 ? btnLastX : savedX,
+      lastY: targetIndex === 0 ? btnLastY : savedY,
+      i: targetIndex,
+      type: targetIndex === 0 ? "button" : "item",
+      isDragging,
+      savedX,
+      savedY,
+      allowItemMove
+    });
+    return;
+  }
 
-  // Delete it now
+  // Delete the item
   playSound(deleteSound);
   deleteItem(targetIndex);
 
-  remainingItems -= 1;
-  itemsLeftNumber.innerHTML = remainingItems;
+  // Update remaining items count
+  if (!items[targetIndex].id.startsWith("alphabetcontaineritem")) {
+    remainingItems = document.querySelectorAll('[id^="worditem"][id$="Text"]').length;
+    itemsLeftNumber.innerHTML = remainingItems;
+  }
 };
 
 // ----------- //
@@ -784,8 +1145,28 @@ const initializeGame = (recievedData) => {
 // --------- //
 //  GENERAL  //
 // --------- //
+const gameDictionary = [
+  { text: "apple", imagePath: "./assets/words_images/apple.png" },
+  { text: "juice", imagePath: "./assets/words_images/juice.png" },
+  { text: "bread", imagePath: "./assets/words_images/bread.png" },
+  { text: "cat", imagePath: "./assets/words_images/cat.png" },
+  { text: "icecream", imagePath: "./assets/words_images/icecream.png" },
+  { text: "pizza", imagePath: "./assets/words_images/pizza.png" },
+  { text: "lollipop", imagePath: "./assets/words_images/lollipop.png" },
+  { text: "noodle", imagePath: "./assets/words_images/noodle.png" }
+];
+
+const letterlist = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 
+  'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+
+let wordindexs = [];
+let worditemcounter = 4;
+let lettercounter = 0;
+let gameDictionaryLength = gameDictionary.length;
 let currSelectedElement = { value: null };
 let gameWon = false;
+let currentDragOverHandler = null;
+let currentDropHandler = null;
 
 // Elements
 let items = [document.getElementById("btn")];
@@ -808,6 +1189,7 @@ let deltaX = { value: null };
 let deltaY = { value: null };
 let teleporationFix = { value: 0 };
 
+
 // -------- //
 //  RESIZE  //
 // -------- //
@@ -823,7 +1205,7 @@ let lastDirection = { value: null };
 // --------- //
 let isTooltipOpen = { value: false };
 let btnLastX = { value: 60 };
-let btnLastY = { value: 125 };
+let btnLastY = { value: 50 };
 let showTooltip = { value: true };
 let btnSrc = { value: "./assets/infoDark.webp" };
 
@@ -935,28 +1317,26 @@ if (snapshot !== "true" && snapshot !== true) {
 
   //Adding Word items
   // Assume there are 8 total items (you can adjust this number)
-  const totalItems = 8;
-  const selectedIndices = [];
 
   // Randomly select 4 unique indices
-  while (selectedIndices.length < 4) {
-    const randomIndex = Math.floor(Math.random() * totalItems) + 1;
-    if (!selectedIndices.includes(randomIndex)) {
-      selectedIndices.push(randomIndex);
-    }
-  }
+  // while (selectedIndices.length < 4) {
+  //   const randomIndex = Math.floor(Math.random() * totalItems) + 1;
+  //   if (!selectedIndices.includes(randomIndex)) {
+  //     selectedIndices.push(randomIndex);
+  //   }
+  // }
 
-  //Push randomly selected items
-  for (let i = 0; i < selectedIndices.length; i++) {
-    const index = selectedIndices[i];
-    document.getElementById(`wordscontainerdivItem${index}`).style.display = "inline-block";
-    items.push(document.getElementById(`wordscontaineritem${index}`));
-    itemDivs.push(document.getElementById(`wordscontainerdivItem${index}`));
-    isItemCollected.push(false);
-    console.log(`wordscontaineritem${index}`);
-  }
+  // //Push randomly selected items
+  // for (let i = 0; i < selectedIndices.length; i++) {
+  //   const index = selectedIndices[i];
+  //   document.getElementById(`wordscontainerdivItem${index}`).style.display = "inline-block";
+  //   items.push(document.getElementById(`wordscontaineritem${index}`));
+  //   itemDivs.push(document.getElementById(`wordscontainerdivItem${index}`));
+  //   isItemCollected.push(false);
+  //   console.log(`wordscontaineritem${index}`);
+  // }
 
-  arrangeWordItems();
+
 
   // Resize Boxes
   for (let i = 0; i < items.length; i++) {
@@ -966,6 +1346,13 @@ if (snapshot !== "true" && snapshot !== true) {
     resizeBoxes.push(document.getElementById(`resizeBox${i}BR`));
   }
 
+  // Chosing Random words from the dictionary
+  wordindexs = generateRandomWordItems(items, itemDivs, isItemCollected, worditemcounter);
+
+  //Arranging the items on the screen in Grid
+  arrangeWordItems();
+
+  //Generating the alphabet items
   generateAlphabetItems(items, itemDivs, isItemCollected);
 
   // Add blanks to words
@@ -973,6 +1360,8 @@ if (snapshot !== "true" && snapshot !== true) {
 
   // Setup drag-and-drop for letters
   setupDragAndDrop(items, blanksData);
+
+
 
   // Add event listeners to all items
   // for (let i = 1; i < items.length; i++) {
@@ -995,13 +1384,14 @@ if (snapshot !== "true" && snapshot !== true) {
   //   handleAddItems();
   // });
 
+  // Add event listener for the Word item
   addItemBtn.addEventListener("click", () => {
     const wordName = document.getElementById("wordInput").value;
     if (!wordName) {
       console.error("Word name is empty.");
       return;
     }
-  
+
     addWordItemOnScreen({
       items,
       itemDivs,
@@ -1027,6 +1417,40 @@ if (snapshot !== "true" && snapshot !== true) {
       arrangeWordItems();
       const blanksData = createBlanksInWords();
       setupDragAndDrop(items, blanksData);
+      remainingItems = document.querySelectorAll('[id^="worditem"][id$="Text"]').length;
+      itemsLeftNumber.innerHTML = remainingItems;
+    });
+  });
+
+  // Add event listener for the letter item
+  addLetterBtn.addEventListener("click", () => {
+    const letterName = document.getElementById("letterInput").value;
+    if (!letterName) {
+      console.error("Letter name is empty.");
+      return;
+    }
+
+    addLetterItemOnScreen({
+      items,
+      itemDivs,
+      isAddingItems,
+      itemsAdditionScreen,
+      letterName,
+      isItemCollected,
+      resizeBoxes,
+      isDragging,
+      isResizing,
+      savedX,
+      savedY,
+      allowItemMove,
+      teleporationFix,
+      deltaX,
+      deltaY,
+      isEditing,
+      isTooltipOpen,
+      btnLastX,
+      btnLastY
+    }).then(() => {
     });
   });
 
@@ -1041,29 +1465,29 @@ if (snapshot !== "true" && snapshot !== true) {
     audioElements.push(document.getElementById(`audioElement${i}`));
   }
 
-  // for (let i = 0; i < itemDivs.length; i++) {
-  //   itemDivs[i].addEventListener("mousedown", (e) => {
-  //     if (isTooltipOpen.value || !isEditing.value) return;
+  for (let i = 0; i < itemDivs.length; i++) {
+    itemDivs[i].addEventListener("mousedown", (e) => {
+      if (isTooltipOpen.value || !isEditing.value) return;
 
-  //     if (areChangesSaved.value) {
-  //       window.parent.postMessage({ type: "unsaved changes", gameId: urlParams.get("gameid"), url: window.location.origin }, parentUrl);
-  //       areChangesSaved.value = false;
-  //       toggleSaveChangesBtn();
-  //     }
+      if (areChangesSaved.value) {
+        window.parent.postMessage({ type: "unsaved changes", gameId: urlParams.get("gameid"), url: window.location.origin }, parentUrl);
+        areChangesSaved.value = false;
+        toggleSaveChangesBtn();
+      }
 
-  //     handleDragStart(e, { i, targetDiv: itemDivs[i], isDragging, isResizing, gameWon, savedX, savedY, allowItemMove, teleporationFix, deltaX, deltaY, isEditing, type: i === 0 ? "button" : "item", placeBack: true, btnLastX, btnLastY });
-  //   });
+      handleDragStart(e, { i, targetDiv: itemDivs[i], isDragging, isResizing, gameWon, savedX, savedY, allowItemMove, teleporationFix, deltaX, deltaY, isEditing, type: i === 0 ? "button" : "item", placeBack: true, btnLastX, btnLastY });
+    });
 
-  //   itemDivs[i].addEventListener("mouseup", (e) => {
-  //     if (isTooltipOpen.value || !isEditing.value) return;
-  //     handleDragEnd(e, { i, targetDiv: itemDivs[i], isDragging, isResizing, gameWon, savedX, savedY, allowItemMove, teleporationFix, deltaX, deltaY, isEditing, type: i === 0 ? "button" : i === 1 ? "targetObject" : "item", placeBack: true, btnLastX, btnLastY });
-  //   });
+    itemDivs[i].addEventListener("mouseup", (e) => {
+      if (isTooltipOpen.value || !isEditing.value) return;
+      handleDragEnd(e, { i, targetDiv: itemDivs[i], isDragging, isResizing, gameWon, savedX, savedY, allowItemMove, teleporationFix, deltaX, deltaY, isEditing, type: i === 0 ? "button" : i === 1 ? "targetObject" : "item", placeBack: true, btnLastX, btnLastY });
+    });
 
-  //   itemDivs[i].addEventListener("click", () => handleElementClick({ currSelectedElement, element: itemDivs[i], isEditing, isTooltipOpen }));
-  // }
+    itemDivs[i].addEventListener("click", () => handleElementClick({ currSelectedElement, element: itemDivs[i], isEditing, isTooltipOpen }));
+  }
 
   // Edit Mode
-  
+
   let cursorType = { value: "default" };
 
   editModeBtns.push(addItemsBtn);
@@ -1100,30 +1524,76 @@ if (snapshot !== "true" && snapshot !== true) {
   // });
 
   editModeBtn.addEventListener("click", () => {
-    const itemsLeftNumber = document.getElementById("itemsLeftNumber");
-  
-    // Reset game state
-    const blanksData = createBlanksInWords(); // Recompute blanks and set remainingItems
+
+    console.log("this is items after alphabet", itemDivs);
+    // Clear existing arrays
+    items.length = 0;
+    itemDivs.length = 0;
+    isItemCollected.length = 0;
+
+    console.log("this is items", items); 
+
+    // Generate new random word items
+    generateRandomWordItems(items, itemDivs, isItemCollected, gameDictionary.length);
+
+    console.log("this is items after", items);
+
+    generateAlphabetItems(items, itemDivs, isItemCollected);
+
+    console.log("this is items after alphabet", itemDivs);
+
+    // Update remaining items
+    remainingItems = 0;
     itemsLeftNumber.innerHTML = remainingItems;
-  
-    // Reset visibility and collection state
-    for (let i = 1; i < items.length; i++) {
-      items[i].style.opacity = 1;
-      items[i].style.display = "block";
-      if (isItemCollected[i]) {
-        isItemCollected[i] = false;
-      }
-    }
-  
+
+    // Update UI
     btnDiv.style.display = btn.style.display = itemsLeft.style.display = itemsLeftNumber.style.display = "block";
-  
+
+    // Hide screens
     hideScreen(settingsScreen);
     hideScreen(itemsAdditionScreen);
-    handleEditModeButtonClick({ game: "wrh", cursorType, clickSound, isEditing, items, resizeBoxes, isItemCollected, remainingItems, showTooltip, isTooltipOpen, btnDiv, editModeBtns, currSelectedElement, settingsScreen, btnClicks, binTooltip, binTooltipRectangle, refreshBtn });
-  
-    // Re-arrange word items and setup drag-and-drop
+
+    // Add drag event listeners to all items
+    const dragParams = {
+      isDragging,
+      isResizing,
+      savedX,
+      savedY,
+      allowItemMove,
+      teleporationFix,
+      deltaX,
+      deltaY,
+      isEditing,
+      isTooltipOpen,
+      btnLastX,
+      btnLastY
+    };
+    addDragListenersToAllItems(itemDivs, dragParams);
+
+    // Call original edit mode handler
+    handleEditModeButtonClick({
+      game: "wrh",
+      cursorType,
+      clickSound,
+      isEditing,
+      items,
+      resizeBoxes,
+      isItemCollected,
+      remainingItems,
+      showTooltip,
+      isTooltipOpen,
+      btnDiv,
+      editModeBtns,
+      currSelectedElement,
+      settingsScreen,
+      btnClicks,
+      binTooltip,
+      binTooltipRectangle,
+      refreshBtn
+    });
+
+    // Arrange word items
     arrangeWordItems();
-    setupDragAndDrop(items, blanksData);
   });
 
   // refreshBtn.addEventListener("click", () => {
@@ -1146,25 +1616,82 @@ if (snapshot !== "true" && snapshot !== true) {
   // });
 
   // Add Items screen
-  
-  refreshBtn.addEventListener("click", () => {
+
+  //console.log(itemDivs);
+
+  // Store the drag and drop handlers so they can be removed later
+
+
+refreshBtn.addEventListener("click", () => {
     const itemsLeftNumber = document.getElementById("itemsLeftNumber");
-  
-    clearBlanksInWords(); // Clear existing blanks first
-    const blanksData = createBlanksInWords(); // Then create new blanks
-    itemsLeftNumber.innerHTML = remainingItems;
-  
-    for (let i = 1; i < items.length; i++) {
-      items[i].style.opacity = 1;
-      items[i].style.display = "block";
-      if (isItemCollected[i]) {
-        isItemCollected[i] = false;
-      }
+    const wordsContainer = document.getElementById("words-container");
+    const alphabetContainer = document.getElementById("alphabet-container");
+
+    // --- Remove existing event listeners before clearing content ---
+    if (wordsContainer) {
+        if (currentDragOverHandler) {
+            wordsContainer.removeEventListener("dragover", currentDragOverHandler);
+        }
+        if (currentDropHandler) {
+            wordsContainer.removeEventListener("drop", currentDropHandler);
+        }
     }
-  
+    // ----------------------------------------------------------------
+
+    // Clear existing DOM elements
+    wordsContainer.innerHTML = "";
+    alphabetContainer.innerHTML = "";
+
+    // Reset arrays and state
+    items.length = 0;
+    itemDivs.length = 0;
+    isItemCollected.length = 0;
+    resizeBoxes.length = 0;
+    lettercounter = 0;
+    gameWon = false;
+
+    // Reinitialize tooltip button
+    items.push(document.getElementById("btn"));
+    itemDivs.push(document.getElementById("btnDiv"));
+    isItemCollected.push(false);
+
+    // Generate new random word items
+    wordindexs = generateRandomWordItems(items, itemDivs, isItemCollected, worditemcounter);
+
+    // Generate alphabet items
+    generateAlphabetItems(items, itemDivs, isItemCollected);
+
+    // Arrange word items
     arrangeWordItems();
+
+    // Create blanks and update remaining items
+    const blanksData = createBlanksInWords();
+    remainingItems = blanksData.reduce((sum, data) => sum + data.blankPositions.length, 0);
+    itemsLeftNumber.innerHTML = remainingItems;
+
+    // Reinitialize drag-and-drop and store the new handlers
     setupDragAndDrop(items, blanksData);
-  });
+
+    // Add drag listeners to all items
+    const dragParams = {
+        isDragging,
+        isResizing,
+        savedX,
+        savedY,
+        allowItemMove,
+        teleporationFix,
+        deltaX,
+        deltaY,
+        isEditing,
+        isTooltipOpen,
+        btnLastX,
+        btnLastY
+    };
+    addDragListenersToAllItems(itemDivs, dragParams);
+
+    // Reset UI elements
+    btn.style.display = itemsLeftNumber.style.display = itemsLeft.style.display = "block";
+});
 
   addItemsBtn.addEventListener("click", () => handleAddItemsButtonClick({ isAddingItems, itemsAdditionScreen, cleanUp: false, clickSound, settingsScreen, saveScreen }));
   itemsAdditionCloseBtn.addEventListener("click", () => handleAddItemsCloseButtonClick({ clickSound, isAddingItems, itemsAdditionScreen }));
@@ -1290,9 +1817,9 @@ if (snapshot !== "true" && snapshot !== true) {
   deleteBtn.addEventListener("mouseup", handleDeleteBtnMouseUp);
 
   // On Board Images Resizing
-  for (let i = 0; i < resizeBoxes.length; i++) {
-    resizeBoxes[i].addEventListener("mousedown", (e) => handleResizeStart(e, { i: parseInt(i / 4), direction: i % 4 === 0 ? "TL" : i % 4 === 1 ? "TR" : i % 4 === 2 ? "BL" : "BR", isResizing, lastScales, allowItemResize, resizeLastX, item: items[parseInt(i / 4)], itemDiv: itemDivs[parseInt(i / 4)], lastDirection, resizeScale }));
-  }
+  // for (let i = 0; i < resizeBoxes.length; i++) {
+  //   resizeBoxes[i].addEventListener("mousedown", (e) => handleResizeStart(e, { i: parseInt(i / 4), direction: i % 4 === 0 ? "TL" : i % 4 === 1 ? "TR" : i % 4 === 2 ? "BL" : "BR", isResizing, lastScales, allowItemResize, resizeLastX, item: items[parseInt(i / 4)], itemDiv: itemDivs[parseInt(i / 4)], lastDirection, resizeScale }));
+  // }
 
   // Context Menu
   for (let i = 1; i < items.length; i++) {

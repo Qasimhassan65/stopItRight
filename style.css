@@ -235,6 +235,46 @@ canvas {
   justify-content: center;
 }
 
+.letter-input-container {
+  display: inline-block;
+  width: fit-content;
+  height: fit-content;
+  margin-bottom: 40px;
+  padding: 10px;
+  border: 1px solid #feb781;
+  border-radius: 12px;
+  background: linear-gradient(to right, #ff9900, #ffcc66);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.letter-input {
+  width: 100px;
+  padding: 10px;
+  margin-top: 10px;
+  border: 1px solid #feb781;
+  border-radius: 8px;
+  background-color: #fff;
+  color: #333;
+  font-size: 16px;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.letter-input::placeholder {
+  color: #888;
+  text-transform: none;
+}
+
+.letter-input:focus {
+  outline: none;
+  border-color: #ff9900;
+  box-shadow: 0 0 5px rgba(255, 153, 0, 0.5);
+}
+
 .image-upload-preview {
   display: block;
   margin: 0 auto 20px;
@@ -411,22 +451,21 @@ div {
 
 
 .game-container {
-  padding: 40px;
+  /* Keep other styles */
   border-radius: 30px;
   width: 90%;
   max-width: 960px;
-  min-height: 600px; /* Increased to accommodate both containers */
+  min-height: 600px;
   text-align: center;
   position: relative;
   z-index: 2;
   margin: 0 auto;
   box-sizing: border-box;
-  position: relative; /* Ensure game-container is a positioned ancestor */
-  min-height: 600px; /* Increase to accommodate both containers */
-  width: 100%;
-  padding: 20px;
-  box-sizing: border-box;
-  overflow: auto; /* Allow scrolling if content overflows */
+  overflow: auto;
+  /* Clean up duplicate padding and width, set a sufficient padding-top */
+  padding: 20px; /* Keep a base padding */
+  padding-top: 80px; /* Increased padding-top to accommodate negative margin */
+  width: 100%; /* Use 100% width with max-width */
 }
 
 .game-container h1 {
@@ -438,9 +477,24 @@ div {
   font-size: 3.5em;
   letter-spacing: 1px;
   color: #ff6b81;
-  margin-bottom: 30px;
+  margin-bottom: 50px; /* Keep your desired bottom margin */
   width: 50%;
   margin-left: 230px;
+  margin-top: -60px; /* Keep your negative top margin */
+}
+
+#words-container {
+  border: 3px dashed #ffb703;
+  background-color: #fffbe6;
+  padding: 20px;
+  width: 100%;
+  min-height: 380px;
+  margin-bottom: 20px;
+  border-radius: 20px;
+  position: relative;
+  z-index: 1;
+  overflow: auto;
+  box-sizing: border-box;
 }
 
 #words-container {
@@ -631,7 +685,7 @@ button {
   padding: 8px 16px;
   border-radius: 10px;
   color: #fff;
-  font-size: 0.8em;
+  font-size: 1.2em;
   font-weight: bold;
   opacity: 0.95;
   animation: fadeOut 2.6s forwards;

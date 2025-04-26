@@ -27,11 +27,11 @@
         height="1024"></canvas>
 
       <!-- Background -->
-      <img id="background" style="position: absolute; left: 0px; top: 0px" src="./assets/background.png"
+      <img id="background" style="position: absolute; left: 0px; top: 0px" src="assets/background.png"
         style="z-index: 9" width="1024" height="1024" />
 
       <!-- Information Screen -->
-      <img id="gameTooltip" src="./assets/instructionsTemplate.webp"
+      <img id="gameTooltip" src="assets/instructionsTemplate.webp"
         style="position: absolute; left: 0px; top: 0px; z-index: 0; display: none" width="1024" height="1024" />
 
       <!-- Title -->
@@ -83,7 +83,7 @@
         height="60" />
 
       <!-- Button -->
-      <div id="btnDiv" style="position: absolute; left: 60px; top: 125px; display: inline-block; z-index: 4002">
+      <div id="btnDiv" style="position: absolute; left: 60px; top: 50px; display: inline-block; z-index: 4002">
         <div id="resizeBox0TL"
           style="position: absolute; left: -6px; top: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red; z-index: 4001">
         </div>
@@ -106,197 +106,21 @@
         <h1>Fill in the Blanks</h1>
         <!-- Word-Items -->
         <div id="words-container">
-          <div id="wordscontainerdivItem1" style="position: absolute; left: 20px; top: 20px; display: none">
-            <div id="resizeBox1TL"
-              style="position: absolute; left: -6px; top: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox1TR"
-              style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox1BL"
-              style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox1BR"
-              style="position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-
-            <div id="wordscontaineritem1" class="word-item">
-              <img id="worditem1Image" src="./assets/words_images/apple.png" />
-              <span id="worditem1Text">apple</span>
-            </div>
-          </div>
-
-          <div id="wordscontainerdivItem2" style="position: absolute; left: 400px; top: 20px; display: none">
-            <div id="resizeBox2TL"
-              style="position: absolute; left: -6px; top: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox2TR"
-              style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox2BL"
-              style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox2BR"
-              style="position: absolute; right: -6px; bottom: -6px | 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-
-            <div id="wordscontaineritem2" class="word-item">
-              <img id="worditem2Image" src="./assets/words_images/juice.png" />
-              <span id="worditem2Text">juice</span>
-            </div>
-          </div>
-
-          <div id="wordscontainerdivItem3" style="position: absolute; left: 30px; top: 220px; display: none">
-            <div id="resizeBox3TL"
-              style="position: absolute; left: -6px; top: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox3TR"
-              style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox3BL"
-              style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox3BR"
-              style="position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-
-            <div id="wordscontaineritem3" class="word-item">
-              <img id="worditem3Image" src="./assets/words_images/icecream.png" />
-              <span id="worditem3Text">icecream</span>
-            </div>
-          </div>
-          
-          <div id="wordscontainerdivItem4" style="position: absolute; left: 330px; top: 100px; display: none">
-            <div id="resizeBox4TL"
-              style="position: absolute; left: -6px; top: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox4TR"
-              style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox4BL"
-              style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox4BR"
-              style="position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-          
-            <div id="wordscontaineritem4" class="word-item">
-              <img id="worditem4Image" src="./assets/words_images/cat.png" />
-              <span id="worditem4Text">cat</span>
-            </div>
-          </div>
-          
-          <div id="wordscontainerdivItem5" style="position: absolute; left: 500px; top: 220px; display: none">
-            <div id="resizeBox5TL"
-              style="position: absolute; left: -6px; top: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox5TR"
-              style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox5BL"
-              style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox5BR"
-              style="position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-          
-            <div id="wordscontaineritem5" class="word-item">
-              <img id="worditem5Image" src="./assets/words_images/lollipop.png" />
-              <span id="worditem5Text">lollipop</span>
-            </div>
-          </div>
-          
-          <div id="wordscontainerdivItem6" style="position: absolute; left: 230px; top: 270px; display: none">
-            <div id="resizeBox6TL"
-              style="position: absolute; left: -6px; top: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox6TR"
-              style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox6BL"
-              style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox6BR"
-              style="position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-          
-            <div id="wordscontaineritem6" class="word-item">
-              <img id="worditem6Image" src="./assets/words_images/pizza.png" />
-              <span id="worditem6Text">pizza</span>
-            </div>
-          </div>
-          
-          <div id="wordscontainerdivItem7" style="position: absolute; left: 630px; top: 50px; display: none">
-            <div id="resizeBox7TL"
-              style="position: absolute; left: -6px; top: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox7TR"
-              style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox7BL"
-              style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox7BR"
-              style="position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-          
-            <div id="wordscontaineritem7" class="word-item">
-              <img id="worditem7Image" src="./assets/words_images/noodle.png" />
-              <span id="worditem7Text">noodle</span>
-            </div>
-          </div>
-          
-          <div id="wordscontainerdivItem8" style="position: absolute; left: 30px; top: 220px; display: none">
-            <div id="resizeBox8TL"
-              style="position: absolute; left: -6px; top: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox8TR"
-              style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox8BL"
-              style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-            <div id="resizeBox8BR"
-              style="position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </div>
-          
-            <div id="wordscontaineritem8" class="word-item">
-              <img id="worditem8Image" src="./assets/words_images/bread.png" />
-              <span id="worditem8Text">bread</span>
-            </div>
-          </div>
-
+          <!-- Words are Dynamically filled through Word Dictionary-->
         </div>
 
-        <!-- Alphabet-Items -->
+        <!-- Alphabets-Items -->
         <div id="alphabet-container">
-          <span id="alphabetcontainerdivItem1" style="position: absolute; left: 20px; top: 20px; display: inline-block">
-            <span id="resizeBox1TL"
-              style="position: absolute; left: -6px; top: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-          </span>
-            <span id="resizeBox1TR"
-              style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-          </span>
-            <span id="resizeBox1BL"
-              style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </span>
-            <span id="resizeBox1BR"
-              style="position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-            </span>
-
-            <span id="alphabetcontaineritem1" class="letter">
-              <span id="alphabetitem1Text">A</span>
-            </span>
-          </span>
+          <!-- Alphabets are Dynamically filled through Word Dictionary-->
         </div>
 
       </div>
 
       <!-- Items Left -->
-      <img id="itemsLeft" src="assets/itemsLeft.webp"
-        style="position: absolute; left: 150px; top: 123px; z-index: 10; border-radius: 12px" width="87" height="65" />
+      <img id="itemsLeft" src="./assets/itemsLeft.webp"
+        style="position: absolute; left: 150px; top: 51px; z-index: 10; border-radius: 12px" width="87" height="65" />
       <div id="itemsLeftNumber"
-        style="position: absolute; left: 208px; top: 130px; font-weight: 500; font-size: 38px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; z-index: 10; cursor: default">
+        style="position: absolute; left: 210px; top: 56px; font-weight: 500; font-size: 38px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; z-index: 10; cursor: default">
         4</div>
 
       <!-- Settings Screen -->
@@ -307,7 +131,7 @@
         <div class="settings-section">
           <h1 class="settings-section-title">Background Image</h1>
           <div class="image-upload-container">
-            <img id="bgImage" src="assets/background.png" class="image-upload-preview" />
+            <img id="bgImage" src="./assets/background.png" class="image-upload-preview" />
             <label for="bgImgInput" class="custom-button">Upload Image</label>
             <input type="file" id="bgImgInput" accept="image/*" class="image-upload-input" />
           </div>
@@ -341,7 +165,7 @@
           <div class="sound-effect-row">
             <h2 class="sound-effect-label">Tooltip Button Click</h2>
             <div class="sound-effect-controls">
-              <audio id="audioElement1" src="assets/audio/click.mp3" controls class="sound-effect-audio"></audio>
+              <audio id="audioElement1" src="./assets/audios/click.mp3" controls class="sound-effect-audio"></audio>
               <label for="audioInput1" class="custom-button" style="margin-left: 52%; margin-top: 10px">Upload
                 Sound</label>
               <input type="file" id="audioInput1" accept="audio/*" style="display: none" />
@@ -371,7 +195,7 @@
           <div class="sound-effect-row">
             <h2 class="sound-effect-label">Delete</h2>
             <div class="sound-effect-controls">
-              <audio id="audioElement4" src="../assets/audios/delete.mp3" controls class="sound-effect-audio"></audio>
+              <audio id="audioElement4" src="./assets/audios/delete.mp3" controls class="sound-effect-audio"></audio>
               <label for="audioInput4" class="custom-button" style="margin-left: 52%; margin-top: 10px">Upload
                 Sound</label>
               <input type="file" id="audioInput4" accept="audio/*" style="display: none" />
@@ -433,22 +257,36 @@
 
       <!-- Items Addition Screen -->
       <!-- Add New Word Screen -->
+      <!-- Add New Word and Letter Screen -->
       <div id="itemsAddition" class="itemAddScreen">
-        <span id="itemsAdditionCloseBtn" class="close-icon">&times;</span>
+        <span id="itemsAdditionCloseBtn" class="close-icon">×</span>
 
+        <!-- Add New Word Section -->
         <h1 class="settings-section-title">Add a New Word</h1>
 
         <div class="image-upload-container">
-          <img id="addableImg" src="../assets/images/questionMark.webp" class="image-upload-preview" />
+          <img id="addableImg" src="./assets/images/questionMark.webp" class="image-upload-preview" />
           <label for="addableImgInput" class="custom-button">Upload Image</label>
           <input type="file" id="addableImgInput" accept="image/*" class="image-upload-input" />
 
-          <!-- New Input Field for Word -->
+          <!-- Input Field for Word -->
           <input type="text" id="wordInput" class="word-input" placeholder="Apple" />
         </div>
 
-        <!-- Add Button -->
+        <!-- Add Button for Word -->
         <label id="addItemBtn" type="submit" class="save-button">Add</label>
+
+        <!-- Add New Letter Section -->
+        <h1 class="settings-section-title">Add a New Letter</h1>
+
+        <div class="letter-input-container">
+          <!-- Input Field for Letter -->
+          <input type="text" id="letterInput" class="letter-input" placeholder="A" maxlength="1" />
+        </div>
+
+        <!-- Add Button for Letter -->
+        <label id="addLetterBtn" type="submit" class="save-button">Add</label>
+
         <div style="margin-bottom: 200px"></div>
       </div>
 
@@ -684,7 +522,7 @@
     div.setAttribute("data-fit-full", fitFull);
 
     // Editing properties
-    let isEditingGame = false;
+    let isEditingGame = true;
     if (urlParams.get("isediting") === "true") isEditingGame = true;
 
     let widthOffset = "0px";
