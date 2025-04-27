@@ -552,6 +552,7 @@ const setupDragAndDrop = (items, blanksData) => {
 function addDragListenersToAllItems(itemDivs, params) { 
   itemDivs.forEach((div, index) => {
     if (div) { // Include all divs, including btnDiv
+      // Determine the type based on whether the div is btnDiv
       const dragType = div.id.includes("btnDiv") ? "button" : "item";
 
       div.addEventListener("mousedown", (e) => {
@@ -2068,7 +2069,7 @@ if (snapshot !== "true" && snapshot !== true) {
   
   //On Board Images Resizing
   for (let i = 0; i < resizeBoxes.length; i++) {
-   resizeBoxes[i].addEventListener("mousedown", () => console.log(`Clicked resizeBox${i}`));
+   resizeBoxes[i].addEventListener("click", () => console.log(`Clicked resizeBox${i}`));
    resizeBoxes[i].addEventListener("mousedown", (e) => handleResizeStart(e, { i: parseInt(i / 4), direction: i % 4 === 0 ? "TL" : i % 4 === 1 ? "TR" : i % 4 === 2 ? "BL" : "BR", isResizing, lastScales, allowItemResize, resizeLastX, item: items[parseInt(i / 4)], itemDiv: itemDivs[parseInt(i / 4)], lastDirection, resizeScale }));
   }
 
