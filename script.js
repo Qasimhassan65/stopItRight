@@ -552,7 +552,6 @@ const setupDragAndDrop = (items, blanksData) => {
 function addDragListenersToAllItems(itemDivs, params) { 
   itemDivs.forEach((div, index) => {
     if (div) { // Include all divs, including btnDiv
-      // Determine the type based on whether the div is btnDiv
       const dragType = div.id.includes("btnDiv") ? "button" : "item";
 
       div.addEventListener("mousedown", (e) => {
