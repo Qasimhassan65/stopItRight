@@ -657,8 +657,6 @@ function addDragListenersToAllItems(itemDivs, params) {
 
 
 // Helper: Show feedback
-
-
 function showFeedback(isCorrect) {
   const feedback = document.createElement("div");
   feedback.className = `feedback ${isCorrect ? "correct" : "wrong"}`;
