@@ -4,6 +4,7 @@
 export const handleResizeStart = (e, params) => {
   e.preventDefault();
 
+  console.log("Resizing started");
   // Update all Variables
   params.isResizing.value = params.allowItemResize[params.i] = true;
 

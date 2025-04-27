@@ -45,6 +45,7 @@ import { playSound, pauseSound, hideScreen, handleDownScaling, handleUpScaling, 
 function generateRandomWordItems(items, itemDivs, isItemCollected, wordItemCount) {
   const selectedIndices = [];
   const wordsContainer = document.getElementById("words-container");
+  const gameContainer = document.querySelector(".game-container");
 
   // Clear existing content
   wordsContainer.innerHTML = "";
@@ -60,38 +61,34 @@ function generateRandomWordItems(items, itemDivs, isItemCollected, wordItemCount
     }
   }
 
-  // console.log("Selected indices:", selectedIndices);
-
   // Generate HTML for selected items
   selectedIndices.forEach((dictIndex, arrayIndex) => {
     const item = gameDictionary[dictIndex];
     const index = arrayIndex + 1; // For HTML IDs (1-based)
     // Dynamic positioning based on index
-    const leftPos = (index - 1) % 4 === 0 ? 20 : 400; // Example: alternate positions
-    const topPos = Math.floor((index - 1) / 4) * 200 + 20; // Stack vertically every 4 items
+    const leftPos = (index - 1) % 4 === 0 ? 20 : 400;
+    const topPos = Math.floor((index - 1) / 4) * 200 + 20;
 
     const itemHtml = `
-          <div id="wordscontainerdivItem${index}" style="position: absolute; left: ${leftPos}px; top: ${topPos}px; display: inline-block">
-              <div id="resizeBox${index}TL" 
-                  style="position: absolute; left: -6px; top: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-              </div>
-              <div id="resizeBox${index}TR" 
-                  style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-              </div>
-              <div id="resizeBox${index}BL" 
-                  style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-              </div>
-              <div id="resizeBox${index}BR" 
-                  style="position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red">
-              </div>
-              <div id="wordscontaineritem${index}" class="word-item">
-                  <img id="worditem${index}Image" src="${item.imagePath}" />
-                  <span id="worditem${index}Text">${item.text}</span>
-              </div>
+      <div id="wordscontainerdivItem${index}" style="position: absolute; left: ${leftPos}px; top: ${topPos}px; display: inline-block">
+          <div id="resizeBox${index}TL" 
+              style="position: absolute; left: -6px; top: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red; z-index: 4001">
           </div>
-      `;
-
-
+          <div id="resizeBox${index}TR" 
+              style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red; z-index: 4001">
+          </div>
+          <div id="resizeBox${index}BL" 
+              style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red; z-index: 4001">
+          </div>
+          <div id="resizeBox${index}BR" 
+              style="position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red; z-index: 4001">
+          </div>
+          <div id="wordscontaineritem${index}" class="word-item">
+              <img id="worditem${index}Image" src="${item.imagePath}" />
+              <span id="worditem${index}Text">${item.text}</span>
+          </div>
+      </div>
+    `;
 
     // Append to container
     wordsContainer.insertAdjacentHTML('beforeend', itemHtml);
@@ -103,17 +100,54 @@ function generateRandomWordItems(items, itemDivs, isItemCollected, wordItemCount
 
     // Add drag event listeners to the container div
     const itemDiv = document.getElementById(`wordscontainerdivItem${index}`);
-    // Add drag event listeners to the container div
     itemDiv.setAttribute("draggable", "true");
     itemDiv.addEventListener("dragstart", (e) => {
       if (isEditing?.value || gameWon) return;
-      console.log(`Dragging started for letter container: ${letter}`);
+
+      // Reposition the itemDiv to the game-container
+      const wordsContainerRect = wordsContainer.getBoundingClientRect();
+      const gameContainerRect = gameContainer.getBoundingClientRect();
+      const currentLeft = parseFloat(itemDiv.style.left) || 0;
+      const currentTop = parseFloat(itemDiv.style.top) || 0;
+
+      // Calculate the new position relative to the game-container
+      const newLeft = wordsContainerRect.left - gameContainerRect.left + currentLeft;
+      const newTop = wordsContainerRect.top - gameContainerRect.top + currentTop;
+
+      // Store original position and parent for restoration
+      itemDiv.dataset.originalLeft = currentLeft;
+      itemDiv.dataset.originalTop = currentTop;
+      itemDiv.dataset.originalParent = 'game-container';
+
+      // Move the item to the game-container
+      itemDiv.style.left = `${newLeft}px`;
+      itemDiv.style.top = `${newTop}px`;
+      gameContainer.appendChild(itemDiv);
+
+      // Call the original dragstart handler
+      console.log(`Dragging started for item: ${index}`);
       e.dataTransfer.setData("text/plain", `lettercontainer${index + 1}`);
       itemDiv.classList.add("dragging");
     });
+
     itemDiv.addEventListener("dragend", (e) => {
-      console.log(`Dragging ended for letter container: ${letter}`);
+      console.log(`Dragging ended for item: ${index}`);
       itemDiv.classList.remove("dragging");
+
+      // Restore the item to the words-container
+      const gameContainerRect = gameContainer.getBoundingClientRect();
+      const wordsContainerRect = wordsContainer.getBoundingClientRect();
+      const currentLeft = parseFloat(itemDiv.style.left) || 0;
+      const currentTop = parseFloat(itemDiv.style.top) || 0;
+
+      // Calculate the new position relative to the words-container
+      const newLeft = currentLeft - (wordsContainerRect.left - gameContainerRect.left);
+      const newTop = currentTop - (wordsContainerRect.top - gameContainerRect.top);
+
+      // Move the item back to the words-container
+      itemDiv.style.left = `${newLeft}px`;
+      itemDiv.style.top = `${newTop}px`;
+      wordsContainer.appendChild(itemDiv);
     });
   });
 
@@ -162,7 +196,11 @@ function arrangeWordItems() {
 // ---------------- //
 // ALPHABETS GENERATION //
 // ---------------- //
+
+let inEdit = false;
+
 const generateAlphabetItems = (items, itemDivs, isItemCollected) => {
+  //console.log(inEdit);
   if (!Array.isArray(items)) items = [document.getElementById("btn")].filter(Boolean);
   if (!Array.isArray(itemDivs)) itemDivs = [document.getElementById("btnDiv")].filter(Boolean);
   if (!Array.isArray(isItemCollected)) isItemCollected = [];
@@ -173,6 +211,8 @@ const generateAlphabetItems = (items, itemDivs, isItemCollected) => {
     console.error("Alphabet container not found. Ensure <div id='alphabet-container'> exists in the HTML.");
     return;
   }
+
+  alphabetContainer.innerHTML = "";
 
   const startX = 20;
   const startY = 20;
@@ -189,7 +229,10 @@ const generateAlphabetItems = (items, itemDivs, isItemCollected) => {
     const yPos = startY + Math.floor(index / maxPerRow) * ySpacing;
     if (index >= 20) xPos += leftOffset;
 
-    const itemDiv = document.createElement("span");
+    
+    console.log("Generating alphabets: " + (inEdit ? "Div" : "Span"));
+
+    const itemDiv = document.createElement("div");
     itemDiv.id = `alphabetcontainerdivItem${index + 1}`;
     itemDiv.style.cssText = `
       position: absolute;
@@ -207,7 +250,7 @@ const generateAlphabetItems = (items, itemDivs, isItemCollected) => {
     ];
 
     corners.forEach(corner => {
-      const resizeBox = document.createElement("span");
+      const resizeBox = document.createElement("div");
       resizeBox.id = `resizeBox${index + 1}${corner.id}`;
       resizeBox.style.cssText = `
         position: absolute;
@@ -218,12 +261,14 @@ const generateAlphabetItems = (items, itemDivs, isItemCollected) => {
         border-radius: 100%;
         background-color: white;
         border: 1px solid red;
+        margin-left: 30px;
+        z-index: 99999999;
       `;
       itemDiv.appendChild(resizeBox);
     });
-
-    const letterItem = document.createElement("span");
-    letterItem.id = `alphabetcontaineritem${index + 1}`;
+    inEdit = false;
+    const letterItem = document.createElement(inEdit ? "div" : "span");  // Use div in edit mode, span in playing mode
+    letterItem.id = `alphabetcontainer${index + 1}`;
     letterItem.className = "letter";
     letterItem.setAttribute("draggable", "true");
 
@@ -235,51 +280,28 @@ const generateAlphabetItems = (items, itemDivs, isItemCollected) => {
     letterItem.appendChild(letterText);
     itemDiv.appendChild(letterItem);
     alphabetContainer.appendChild(itemDiv);
-    lettercounter++;
 
-    try {
-      items.push(letterItem); // Only push letterItem to items
-      itemDivs.push(itemDiv); // Only push itemDiv to itemDivs
-      isItemCollected.push(false);
+    items.push(letterItem);
+    itemDivs.push(itemDiv);
+    isItemCollected.push(false);
 
-      // Add drag event listeners to letterItem for gameplay dragging
-      letterItem.addEventListener("dragstart", (e) => {
-        if (isEditing?.value || gameWon) return;
-        e.dataTransfer.setData("text/plain", letter.toUpperCase());
-        letterItem.classList.add("dragging");
-      });
+    // Add drag event listeners to letterItem for gameplay dragging
+    letterItem.addEventListener("dragstart", (e) => {
+      console.log(`Dragging started for letter: ${letter}`);
+      e.dataTransfer.setData("text/plain", `lettercontainer${index + 1}`);
+      letterItem.classList.add("dragging");
+    });
 
-      letterItem.addEventListener("dragend", (e) => {
-        letterItem.classList进步("dragging");
-      });
-
-      // Add contextmenu listener for letterItem
-      letterItem.addEventListener("contextmenu", (e) => {
-        currentItemCM = index + 1;
-        handleItemContextMenu(e, { isEditing, contextMenu, changeImageBtn });
-      });
-
-      // Add drag listeners for editing mode using addDragListenersToAllItems
-      const dragParams = {
-        isDragging,
-        isResizing,
-        savedX,
-        savedY,
-        allowItemMove,
-        teleporationFix,
-        deltaX,
-        deltaY,
-        isEditing,
-        isTooltipOpen,
-        btnLastX,
-        btnLastY
-      };
-      addDragListenersToAllItems([itemDiv], dragParams);
-    } catch (error) {
-      console.error(`Error adding letter ${letter} to arrays:`, error);
-    }
+    letterItem.addEventListener("dragend", (e) => {
+      console.log(`Dragging ended for letter: ${letter}`);
+      letterItem.classList.remove("dragging");
+    }); 
   });
+
+
 };
+
+
 
 // ---------------- //
 // CREATE BLANKS //
@@ -289,6 +311,35 @@ const createBlanksInWords = () => {
   const wordSpans = document.querySelectorAll('[id^="worditem"][id$="Text"]');
   let totalBlanks = 0;
 
+  // Step 1: First restore all words to their original text
+  wordSpans.forEach((wordSpan, i) => {
+    if (!wordSpan) return;
+
+    const wordContainer = wordSpan.closest('[id^="wordscontainerdivItem"]');
+    if (!wordContainer || wordContainer.style.display === "none") return;
+
+    // Find the original word from the dictionary
+    // Extract the index number from the ID (e.g., "worditem3Text" -> 3)
+    const indexMatch = wordSpan.id.match(/worditem(\d+)Text/);
+    if (indexMatch && indexMatch[1]) {
+      const index = parseInt(indexMatch[1], 10) - 1; // Convert to 0-based for array access
+      
+      // Get the corresponding dictionary item
+      // We need to adjust the index based on how items were generated
+      if (index >= 0 && index < wordSpans.length) {
+        // Get the current displayed word text
+        const currentText = wordSpan.textContent.trim();
+        
+        // If word contains blanks (underscores), restore it from dictionary
+        if (currentText.includes('_')) {
+          const originalWord = gameDictionary[index % gameDictionary.length].text;
+          wordSpan.textContent = originalWord;
+        }
+      }
+    }
+  });
+
+  // Step 2: Now create new blanks
   wordSpans.forEach((wordSpan, i) => {
     if (!wordSpan) {
       console.warn(`Word span at index ${i} is null or undefined.`);
@@ -319,6 +370,7 @@ const createBlanksInWords = () => {
     const blankPositions = [];
     const validPositions = wordChars
       .map((char, idx) => ({ char, idx }))
+      .filter(({ char }) => char.trim() !== "") // Ensure character isn't whitespace
       .map(({ idx }) => idx);
 
     if (validPositions.length === 0) {
@@ -355,14 +407,12 @@ const createBlanksInWords = () => {
     });
 
     totalBlanks += blankPositions.length;
-
-    //console.log(`Updated word: ${originalWord} -> ${newText}`);
-    //console.log(`Blank positions: ${blankPositions}, Expected letters: ${expectedLetters}`);
   });
 
+  // Update remaining items count
   remainingItems = totalBlanks;
   itemsLeftNumber.innerHTML = remainingItems;
-  //console.log(`Total blanks set: ${remainingItems}`);
+  console.log(`Total blanks set: ${remainingItems}`);
 
   return blanksData;
 };
@@ -371,7 +421,7 @@ const createBlanksInWords = () => {
 // HANDLE DRAG AND DROP//
 // ---------------- //
 const setupDragAndDrop = (items, blanksData) => {
-  const wordsContainer = document.getElementById("words-container");
+  const gameContainer = document.querySelector(".game-container");
 
   // Define the handlers
   const dragOverHandler = (e) => {
@@ -388,12 +438,10 @@ const setupDragAndDrop = (items, blanksData) => {
 
     // Check if the letter is a container ID (e.g., "lettercontainer2")
     if (letter.startsWith("lettercontainer")) {
-      // Extract the index from the container ID (e.g., "2" from "lettercontainer2")
       const index = parseInt(letter.replace("lettercontainer", ""), 10);
-      // Get the corresponding letter text element (e.g., "alphabetitem2Text")
       const letterTextElement = document.getElementById(`alphabetitem${index}Text`);
       if (letterTextElement) {
-        letter = letterTextElement.textContent.toUpperCase(); // Get the letter (e.g., "B")
+        letter = letterTextElement.textContent.toUpperCase();
       } else {
         console.warn(`Letter text element for ${letter} not found`);
         playSound(wrongSound);
@@ -402,15 +450,12 @@ const setupDragAndDrop = (items, blanksData) => {
       }
     }
 
-    // Get all word spans
     const wordSpans = document.querySelectorAll('[id^="worditem"][id$="Text"]');
     let closestSpan = null;
     let minDistance = Infinity;
 
-    // Find the closest word span based on drop coordinates
     wordSpans.forEach(span => {
       const rect = span.getBoundingClientRect();
-      // Expand the hit area by adding a tolerance (e.g., 20px)
       const tolerance = 20;
       const expandedRect = {
         left: rect.left - tolerance,
@@ -419,14 +464,12 @@ const setupDragAndDrop = (items, blanksData) => {
         bottom: rect.bottom + tolerance
       };
 
-      // Check if drop is within the expanded rectangle
       if (
         dropX >= expandedRect.left &&
         dropX <= expandedRect.right &&
         dropY >= expandedRect.top &&
         dropY <= expandedRect.bottom
       ) {
-        // Calculate distance to span center for closest match
         const centerX = rect.left + rect.width / 2;
         const centerY = rect.top + rect.height / 2;
         const distance = Math.sqrt(
@@ -465,16 +508,13 @@ const setupDragAndDrop = (items, blanksData) => {
       console.log(`letter: ${letter}, expectedLetter: ${expectedLetter}`);
       if (letter === expectedLetter) {
         console.log(`Letter ${letter} matched at position ${pos} in word ${wordData.originalWord}`);
-        wordChars[pos] = wordData.originalWord[pos]; // Use original word's letter to preserve case
+        wordChars[pos] = wordData.originalWord[pos];
         closestSpan.textContent = wordChars.join("");
         remainingItems--;
         itemsLeftNumber.innerHTML = remainingItems;
-        console.log(`Remaining items: ${remainingItems}`);
         playSound(collectSound);
-        console.log(`before ${filled}`);
         filled = true;
         showFeedback(true);
-        console.log(`after ${filled}`);
 
         if (remainingItems === 0) {
           winSound.play();
@@ -486,28 +526,47 @@ const setupDragAndDrop = (items, blanksData) => {
       }
     }
 
-    console.log(filled);
     if (!filled) {
-      console.log("hi");
       playSound(wrongSound);
       showFeedback(false);
     }
   };
 
+  // Remove previous listeners if they exist
+  if (currentDragOverHandler) {
+    gameContainer.removeEventListener("dragover", currentDragOverHandler);
+  }
+  if (currentDropHandler) {
+    gameContainer.removeEventListener("drop", currentDropHandler);
+  }
+
   // Add the event listeners and store the handlers
-  wordsContainer.addEventListener("dragover", dragOverHandler);
-  wordsContainer.addEventListener("drop", dropHandler);
+  gameContainer.addEventListener("dragover", dragOverHandler);
+  gameContainer.addEventListener("drop", dropHandler);
 
   currentDragOverHandler = dragOverHandler;
   currentDropHandler = dropHandler;
 };
 
 
-function addDragListenersToAllItems(itemDivs, params) {
+function addDragListenersToAllItems(itemDivs, params) { 
   itemDivs.forEach((div, index) => {
-    if (div && !div.id.includes("btnDiv")) { // Exclude tooltip button
+    if (div) { // Include all divs, including btnDiv
+      // Determine the type based on whether the div is btnDiv
+      const dragType = div.id.includes("btnDiv") ? "button" : "item";
+
       div.addEventListener("mousedown", (e) => {
         if (params.isTooltipOpen.value || !params.isEditing.value) return;
+        // Debug log for drag start
+        const innerItem = div.querySelector(`[id^="wordscontaineritem"] , [id^="alphabetcontainer"]`);
+        // console.log(`Drag started on container div:`, {
+        //   containerId: div.id,
+        //   index: index,
+        //   innerItemId: innerItem ? innerItem.id : "No inner item",
+        //   dragType: dragType,
+        //   eventType: "mousedown",
+        //   position: { x: e.clientX, y: e.clientY }
+        // });
         handleDragStart(e, {
           i: index,
           targetDiv: div,
@@ -521,7 +580,8 @@ function addDragListenersToAllItems(itemDivs, params) {
           deltaX: params.deltaX,
           deltaY: params.deltaY,
           isEditing: params.isEditing,
-          type: "item",
+          type: dragType, // Use "button" for btnDiv, "item" for others
+          subType: "text", // Required by handleDragStart
           placeBack: true,
           btnLastX: params.btnLastX,
           btnLastY: params.btnLastY
@@ -530,6 +590,16 @@ function addDragListenersToAllItems(itemDivs, params) {
 
       div.addEventListener("mouseup", (e) => {
         if (params.isTooltipOpen.value || !params.isEditing.value) return;
+        // Debug log for drag end
+        const innerItem = div.querySelector(`[id^="wordscontaineritem"] , [id^="alphabetcontainer"]`);
+        // console.log(`Drag ended on container div:`, {
+        //   containerId: div.id,
+        //   index: index,
+        //   innerItemId: innerItem ? innerItem.id : "No inner item",
+        //   dragType: dragType,
+        //   eventType: "mouseup",
+        //   position: { x: e.clientX, y: e.clientY }
+        // });
         handleDragEnd(e, {
           i: index,
           targetDiv: div,
@@ -543,7 +613,8 @@ function addDragListenersToAllItems(itemDivs, params) {
           deltaX: params.deltaX,
           deltaY: params.deltaY,
           isEditing: params.isEditing,
-          type: "item",
+          type: dragType, // Use "button" for btnDiv, "item" for others
+          subType: "text", // Required by handleDragEnd
           placeBack: true,
           btnLastX: params.btnLastX,
           btnLastY: params.btnLastY
@@ -559,9 +630,18 @@ function addDragListenersToAllItems(itemDivs, params) {
         })
       );
 
-      const innerItem = div.querySelector(`[id^="wordscontaineritem"], [id^="alphabetcontaineritem"]`);
+      const innerItem = div.querySelector(`[id^="wordscontaineritem"] , [id^="alphabetcontainer"]`);
       if (innerItem) {
         innerItem.addEventListener("contextmenu", (e) => {
+          // Debug log for contextmenu
+          console.log(`Context menu opened on inner item:`, {
+            containerId: div.id,
+            innerItemId: innerItem.id,
+            index: index,
+            dragType: dragType,
+            eventType: "contextmenu",
+            position: { x: e.clientX, y: e.clientY }
+          });
           currentItemCM = index;
           handleItemContextMenu(e, {
             isEditing: params.isEditing,
@@ -577,6 +657,8 @@ function addDragListenersToAllItems(itemDivs, params) {
 
 
 // Helper: Show feedback
+
+
 function showFeedback(isCorrect) {
   const feedback = document.createElement("div");
   feedback.className = `feedback ${isCorrect ? "correct" : "wrong"}`;
@@ -784,7 +866,7 @@ export const addLetterItemOnScreen = (params) => {
       return;
     }
 
-    const div = document.createElement("span");
+    const div = document.createElement("div");
     div.id = `alphabetcontainerdivItem${latestItem}`;
     div.style.cssText = `
       position: absolute;
@@ -801,7 +883,7 @@ export const addLetterItemOnScreen = (params) => {
     ];
 
     corners.forEach(corner => {
-      const resizeBox = document.createElement("span");
+      const resizeBox = document.createElement("div");
       resizeBox.id = `resizeBox${latestItem}${corner.id}`;
       resizeBox.style.cssText = `
         position: absolute;
@@ -818,7 +900,7 @@ export const addLetterItemOnScreen = (params) => {
       params.resizeBoxes.push(resizeBox);
     });
 
-    const letterItem = document.createElement("span");
+    const letterItem = document.createElement("div");
     letterItem.id = `alphabetcontaineritem${latestItem}`;
     letterItem.className = "letter";
     letterItem.setAttribute("draggable", "true");
@@ -889,7 +971,6 @@ const getDraggedItemIndex = () => {
     if (allowItemMove[i]) {
       allowItemMove[i] = false;
       isDragging.value = false;
-
       return i;
     }
   }
@@ -937,24 +1018,73 @@ const getDraggedItemIndex = () => {
 // };
 
 // Modified deleteItem function to handle all items
+
+
+
+
 const deleteItem = (index) => {
   if (index < 0 || index >= items.length) return;
 
-  delItemCount++;
-  delItems.push(itemDivs[index]);
+  const isWordItem = items[index]?.id.startsWith("wordscontaineritem");
+  const isLetterItem = items[index]?.id.startsWith("alphabetcontainer");
 
-  // Hide the item and its container
-  itemDivs[index].style.display = "none";
-  items[index].style.display = "none";
+  if (isWordItem) {
+    const wordTextElement = document.getElementById(`worditem${index}Text`);
+    const wordText = wordTextElement ? wordTextElement.textContent : null;
 
-  // Hide associated resize boxes
-  for (let i = 0; i < 4; i++) {
-    resizeBoxes[index * 4 + i].style.display = "none";
+    if (wordText) {
+      const wordIndex = gameDictionary.findIndex(entry =>
+        entry.text &&
+        wordText &&
+        entry.text.toUpperCase() === wordText.toUpperCase()
+      );
+      if (wordIndex !== -1) {
+        gameDictionary.splice(wordIndex, 1);
+      }
+    }
+  } else if (isLetterItem) {
+    const letterIdMatch = items[index]?.id.match(/alphabetcontainer(\d+)/);
+    const letterIndex = letterIdMatch ? parseInt(letterIdMatch[1], 10) : null;
+
+    if (letterIndex) {
+      const letterTextElement = document.getElementById(`alphabetitem${letterIndex}Text`);
+      const letterText = letterTextElement ? letterTextElement.textContent : null;
+
+      if (letterText) {
+        const expectedLetter = letterlist[letterIndex - 1];
+
+        if (letterText.toUpperCase() === expectedLetter) {
+          const letterListIndex = letterlist.indexOf(letterText.toUpperCase());
+          if (letterListIndex !== -1) {
+            letterlist.splice(letterListIndex, 1);
+          }
+        }
+      }
+    }
   }
 
-  // Update collection state
-  isItemCollected[index] = true; // Mark as collected to prevent interactions
+  // Hide the item's HTML element if it exists
+  if (itemDivs[index]) {
+    itemDivs[index].style.display = "none";
+  }
+
+  // items[index] = null;
+  // itemDivs[index] = null;
+  // isItemCollected[index] = null;
+
+  const resizeBoxIndex = index * 4;
+  if (resizeBoxIndex < resizeBoxes.length) {
+    resizeBoxes.splice(resizeBoxIndex, 4);
+  }
+
+  delItemCount++;
+
+  if (isWordItem) {
+    remainingItems = document.querySelectorAll('[id^="worditem"][id$="Text"]').length;
+    itemsLeftNumber.innerHTML = remainingItems;
+  }
 };
+
 
 // Updated handleDeleteBtnMouseUp to handle all draggable items
 const handleDeleteBtnMouseUp = () => {
@@ -1338,13 +1468,6 @@ if (snapshot !== "true" && snapshot !== true) {
 
 
 
-  // Resize Boxes
-  for (let i = 0; i < items.length; i++) {
-    resizeBoxes.push(document.getElementById(`resizeBox${i}TL`));
-    resizeBoxes.push(document.getElementById(`resizeBox${i}TR`));
-    resizeBoxes.push(document.getElementById(`resizeBox${i}BL`));
-    resizeBoxes.push(document.getElementById(`resizeBox${i}BR`));
-  }
 
   // Chosing Random words from the dictionary
   wordindexs = generateRandomWordItems(items, itemDivs, isItemCollected, worditemcounter);
@@ -1359,7 +1482,77 @@ if (snapshot !== "true" && snapshot !== true) {
   const blanksData = createBlanksInWords();
 
   // Setup drag-and-drop for letters
-  setupDragAndDrop(items, blanksData);
+  //setupDragAndDrop(items, blanksData);
+
+  //console.log("Resize Boxes: ", resizeBoxes);
+
+
+
+  // Resize Boxes
+  const btn = document.getElementById('btn');
+  if (btn) {
+    const tl = document.getElementById(`resizeBox0TL`);
+    const tr = document.getElementById(`resizeBox0TR`);
+    const bl = document.getElementById(`resizeBox0BL`);
+    const br = document.getElementById(`resizeBox0BR`);
+
+    // Check if any resize box is missing and log the relevant info
+    if (!tl || !tr || !bl || !br) {
+      console.log(`Missing resize boxes for btn item at index 0:`);
+      if (!tl) console.log(`  - TL box missing`);
+      if (!tr) console.log(`  - TR box missing`);
+      if (!bl) console.log(`  - BL box missing`);
+      if (!br) console.log(`  - BR box missing`);
+    } else {
+      resizeBoxes.push(tl, tr, bl, br);
+    }
+  }
+
+  // Handle alphabet items starting from index 1 to 26
+  for (let i = 1; i <= letterlist.length; i++) {
+    const alphabetItem = document.getElementById(`alphabetcontainer${i}`);
+    if (alphabetItem) {
+      const tl = document.getElementById(`resizeBox${i}TL`);
+      const tr = document.getElementById(`resizeBox${i}TR`);
+      const bl = document.getElementById(`resizeBox${i}BL`);
+      const br = document.getElementById(`resizeBox${i}BR`);
+
+      // Check if any resize box is missing and log the relevant info
+      if (!tl || !tr || !bl || !br) {
+        console.log(`Missing resize boxes for alphabet item at index ${i}:`);
+        if (!tl) console.log(`  - TL box missing`);
+        if (!tr) console.log(`  - TR box missing`);
+        if (!bl) console.log(`  - BL box missing`);
+        if (!br) console.log(`  - BR box missing`);
+      } else {
+        resizeBoxes.push(tl, tr, bl, br);
+      }
+    }
+  }
+
+  // Handle word items starting from index 1 to 4
+  for (let i = 1; i <= wordindexs.length; i++) {
+    const wordItem = document.getElementById(`wordscontaineritem${i}`);
+    if (wordItem) {
+      const tl = document.getElementById(`resizeBox${i}TL`);
+      const tr = document.getElementById(`resizeBox${i}TR`);
+      const bl = document.getElementById(`resizeBox${i}BL`);
+      const br = document.getElementById(`resizeBox${i}BR`);
+
+      // Check if any resize box is missing and log the relevant info
+      if (!tl || !tr || !bl || !br) {
+        console.log(`Missing resize boxes for word item at index ${i}:`);
+        if (!tl) console.log(`  - TL box missing`);
+        if (!tr) console.log(`  - TR box missing`);
+        if (!bl) console.log(`  - BL box missing`);
+        if (!br) console.log(`  - BR box missing`);
+      } else {
+        resizeBoxes.push(tl, tr, bl, br);
+      }
+    }
+  }
+
+  //console.log(resizeBoxes);
 
 
 
@@ -1414,9 +1607,9 @@ if (snapshot !== "true" && snapshot !== true) {
       btnLastX,
       btnLastY
     }).then(() => {
-      arrangeWordItems();
-      const blanksData = createBlanksInWords();
-      setupDragAndDrop(items, blanksData);
+      //arrangeWordItems();
+      //const blanksData = createBlanksInWords();
+      //setupDragAndDrop(items, blanksData);
       remainingItems = document.querySelectorAll('[id^="worditem"][id$="Text"]').length;
       itemsLeftNumber.innerHTML = remainingItems;
     });
@@ -1524,53 +1717,9 @@ if (snapshot !== "true" && snapshot !== true) {
   // });
 
   editModeBtn.addEventListener("click", () => {
-
-    console.log("this is items after alphabet", itemDivs);
-    // Clear existing arrays
-    items.length = 0;
-    itemDivs.length = 0;
-    isItemCollected.length = 0;
-
-    console.log("this is items", items); 
-
-    // Generate new random word items
-    generateRandomWordItems(items, itemDivs, isItemCollected, gameDictionary.length);
-
-    console.log("this is items after", items);
-
-    generateAlphabetItems(items, itemDivs, isItemCollected);
-
-    console.log("this is items after alphabet", itemDivs);
-
-    // Update remaining items
-    remainingItems = 0;
-    itemsLeftNumber.innerHTML = remainingItems;
-
-    // Update UI
-    btnDiv.style.display = btn.style.display = itemsLeft.style.display = itemsLeftNumber.style.display = "block";
-
-    // Hide screens
-    hideScreen(settingsScreen);
-    hideScreen(itemsAdditionScreen);
-
-    // Add drag event listeners to all items
-    const dragParams = {
-      isDragging,
-      isResizing,
-      savedX,
-      savedY,
-      allowItemMove,
-      teleporationFix,
-      deltaX,
-      deltaY,
-      isEditing,
-      isTooltipOpen,
-      btnLastX,
-      btnLastY
-    };
-    addDragListenersToAllItems(itemDivs, dragParams);
-
-    // Call original edit mode handler
+    const isCurrentlyEditing = isEditing.value; // check the current state
+    inEdit = !inEdit; 
+    // Call original edit mode handler first (it toggles the mode)
     handleEditModeButtonClick({
       game: "wrh",
       cursorType,
@@ -1591,10 +1740,123 @@ if (snapshot !== "true" && snapshot !== true) {
       binTooltipRectangle,
       refreshBtn
     });
+  
+    // Now, check what happened AFTER toggling
+    const isNowEditing = isEditing.value;
+  
+    // If we were NOT editing before, and now we ARE editing (means entered full edit mode)
+    if (!isCurrentlyEditing && isNowEditing) {
+      // Clear existing arrays
+      items.length = 0;
+      itemDivs.length = 0;
+      isItemCollected.length = 0;
+  
+      // Push the btn and btnDiv again
+      items.push(document.getElementById("btn"));
+      itemDivs.push(document.getElementById("btnDiv"));
+  
+      // Generate new random word items
+      wordindexs = generateRandomWordItems(items, itemDivs, isItemCollected, gameDictionary.length);
+  
+      generateAlphabetItems(items, itemDivs, isItemCollected);
 
-    // Arrange word items
-    arrangeWordItems();
+      const btn = document.getElementById('btn');
+      if (btn) {
+        const tl = document.getElementById(`resizeBox0TL`);
+        const tr = document.getElementById(`resizeBox0TR`);
+        const bl = document.getElementById(`resizeBox0BL`);
+        const br = document.getElementById(`resizeBox0BR`);
+    
+        // Check if any resize box is missing and log the relevant info
+        if (!tl || !tr || !bl || !br) {
+          console.log(`Missing resize boxes for btn item at index 0:`);
+          if (!tl) console.log(`  - TL box missing`);
+          if (!tr) console.log(`  - TR box missing`);
+          if (!bl) console.log(`  - BL box missing`);
+          if (!br) console.log(`  - BR box missing`);
+        } else {
+          resizeBoxes.push(tl, tr, bl, br);
+        }
+      }
+    
+      // Handle alphabet items starting from index 1 to 26
+      for (let i = 1; i <= letterlist.length; i++) {
+        const alphabetItem = document.getElementById(`alphabetcontainer${i}`);
+        if (alphabetItem) {
+          const tl = document.getElementById(`resizeBox${i}TL`);
+          const tr = document.getElementById(`resizeBox${i}TR`);
+          const bl = document.getElementById(`resizeBox${i}BL`);
+          const br = document.getElementById(`resizeBox${i}BR`);
+    
+          // Check if any resize box is missing and log the relevant info
+          if (!tl || !tr || !bl || !br) {
+            console.log(`Missing resize boxes for alphabet item at index ${i}:`);
+            if (!tl) console.log(`  - TL box missing`);
+            if (!tr) console.log(`  - TR box missing`);
+            if (!bl) console.log(`  - BL box missing`);
+            if (!br) console.log(`  - BR box missing`);
+          } else {
+            resizeBoxes.push(tl, tr, bl, br);
+          }
+        }
+      }
+    
+      // Handle word items starting from index 1 to 4
+      for (let i = 1; i <= gameDictionary.length; i++) {
+        const wordItem = document.getElementById(`wordscontaineritem${i}`);
+        if (wordItem) {
+          const tl = document.getElementById(`resizeBox${i}TL`);
+          const tr = document.getElementById(`resizeBox${i}TR`);
+          const bl = document.getElementById(`resizeBox${i}BL`);
+          const br = document.getElementById(`resizeBox${i}BR`);
+    
+          // Check if any resize box is missing and log the relevant info
+          if (!tl || !tr || !bl || !br) {
+            console.log(`Missing resize boxes for word item at index ${i}:`);
+            if (!tl) console.log(`  - TL box missing`);
+            if (!tr) console.log(`  - TR box missing`);
+            if (!bl) console.log(`  - BL box missing`);
+            if (!br) console.log(`  - BR box missing`);
+          } else {
+            resizeBoxes.push(tl, tr, bl, br);
+          }
+        }
+      }
+    
+      //console.log(resizeBoxes);
+  
+      // Update remaining items
+      remainingItems = 0;
+      itemsLeftNumber.innerHTML = remainingItems;
+  
+      // Update UI
+      btnDiv.style.display = btn.style.display = itemsLeft.style.display = itemsLeftNumber.style.display = "block";
+  
+      // Hide screens
+      hideScreen(settingsScreen);
+      hideScreen(itemsAdditionScreen);
+  
+      // Add drag event listeners to all items
+      const dragParams = {
+        isDragging,
+        isResizing,
+        savedX,
+        savedY,
+        allowItemMove,
+        teleporationFix,
+        deltaX,
+        deltaY,
+        isEditing,
+        isTooltipOpen,
+        btnLastX,
+        btnLastY
+      };
+      addDragListenersToAllItems(itemDivs, dragParams);
+      // Arrange word items
+      arrangeWordItems();
+    }
   });
+  
 
   // refreshBtn.addEventListener("click", () => {
   //   const itemsLeftNumber = document.getElementById("itemsLeftNumber");
@@ -1621,77 +1883,64 @@ if (snapshot !== "true" && snapshot !== true) {
 
   // Store the drag and drop handlers so they can be removed later
 
+  
+  refreshBtn.addEventListener("click", () => {
+      inEdit = !inEdit;
+      console.log("In Edit Mode:", inEdit);
+      playSound(clickSound);
+      const itemsLeftNumber = document.getElementById("itemsLeftNumber");
+      const wordsContainer = document.getElementById("words-container");
+      const alphabetContainer = document.getElementById("alphabet-container");
 
-refreshBtn.addEventListener("click", () => {
-    const itemsLeftNumber = document.getElementById("itemsLeftNumber");
-    const wordsContainer = document.getElementById("words-container");
-    const alphabetContainer = document.getElementById("alphabet-container");
+      // --- Remove existing event listeners before clearing content ---
+      if (wordsContainer) {
+          if (currentDragOverHandler) {
+              wordsContainer.removeEventListener("dragover", currentDragOverHandler);
+          }
+          if (currentDropHandler) {
+              wordsContainer.removeEventListener("drop", currentDropHandler);
+          }
+      }
+      // ----------------------------------------------------------------
 
-    // --- Remove existing event listeners before clearing content ---
-    if (wordsContainer) {
-        if (currentDragOverHandler) {
-            wordsContainer.removeEventListener("dragover", currentDragOverHandler);
-        }
-        if (currentDropHandler) {
-            wordsContainer.removeEventListener("drop", currentDropHandler);
-        }
-    }
-    // ----------------------------------------------------------------
+      // Clear existing DOM elements
+      // wordsContainer.innerHTML = "";
+      // alphabetContainer.innerHTML = "";
 
-    // Clear existing DOM elements
-    wordsContainer.innerHTML = "";
-    alphabetContainer.innerHTML = "";
+      // Reset arrays and state
+      // items.length = 0;
+      // itemDivs.length = 0;
+      // isItemCollected.length = 0;
+      // resizeBoxes.length = 0;
+      // lettercounter = 0;
+      gameWon = false;
 
-    // Reset arrays and state
-    items.length = 0;
-    itemDivs.length = 0;
-    isItemCollected.length = 0;
-    resizeBoxes.length = 0;
-    lettercounter = 0;
-    gameWon = false;
+      // Reinitialize tooltip button
+      // items.push(document.getElementById("btn"));
+      // itemDivs.push(document.getElementById("btnDiv"));
+      // isItemCollected.push(false);
 
-    // Reinitialize tooltip button
-    items.push(document.getElementById("btn"));
-    itemDivs.push(document.getElementById("btnDiv"));
-    isItemCollected.push(false);
+      // // Generate new random word items
+      // wordindexs = generateRandomWordItems(items, itemDivs, isItemCollected, worditemcounter);
 
-    // Generate new random word items
-    wordindexs = generateRandomWordItems(items, itemDivs, isItemCollected, worditemcounter);
+      // // Generate alphabet items
+      // generateAlphabetItems(items, itemDivs, isItemCollected);
 
-    // Generate alphabet items
-    generateAlphabetItems(items, itemDivs, isItemCollected);
+      // Arrange word items
+      //arrangeWordItems();
 
-    // Arrange word items
-    arrangeWordItems();
+      // Create blanks and update remaining items
+      const blanksData = createBlanksInWords();
+      remainingItems = blanksData.reduce((sum, data) => sum + data.blankPositions.length, 0);
+      itemsLeftNumber.innerHTML = remainingItems;
 
-    // Create blanks and update remaining items
-    const blanksData = createBlanksInWords();
-    remainingItems = blanksData.reduce((sum, data) => sum + data.blankPositions.length, 0);
-    itemsLeftNumber.innerHTML = remainingItems;
+      // Reinitialize drag-and-drop and store the new handlers
+      //setupDragAndDrop(items, blanksData);
 
-    // Reinitialize drag-and-drop and store the new handlers
-    setupDragAndDrop(items, blanksData);
-
-    // Add drag listeners to all items
-    const dragParams = {
-        isDragging,
-        isResizing,
-        savedX,
-        savedY,
-        allowItemMove,
-        teleporationFix,
-        deltaX,
-        deltaY,
-        isEditing,
-        isTooltipOpen,
-        btnLastX,
-        btnLastY
-    };
-    addDragListenersToAllItems(itemDivs, dragParams);
-
-    // Reset UI elements
-    btn.style.display = itemsLeftNumber.style.display = itemsLeft.style.display = "block";
-});
+    
+      // Reset UI elements
+      btn.style.display = itemsLeftNumber.style.display = itemsLeft.style.display = "block";
+  });
 
   addItemsBtn.addEventListener("click", () => handleAddItemsButtonClick({ isAddingItems, itemsAdditionScreen, cleanUp: false, clickSound, settingsScreen, saveScreen }));
   itemsAdditionCloseBtn.addEventListener("click", () => handleAddItemsCloseButtonClick({ clickSound, isAddingItems, itemsAdditionScreen }));
@@ -1816,10 +2065,13 @@ refreshBtn.addEventListener("click", () => {
   // Items Deletion
   deleteBtn.addEventListener("mouseup", handleDeleteBtnMouseUp);
 
-  // On Board Images Resizing
-  // for (let i = 0; i < resizeBoxes.length; i++) {
-  //   resizeBoxes[i].addEventListener("mousedown", (e) => handleResizeStart(e, { i: parseInt(i / 4), direction: i % 4 === 0 ? "TL" : i % 4 === 1 ? "TR" : i % 4 === 2 ? "BL" : "BR", isResizing, lastScales, allowItemResize, resizeLastX, item: items[parseInt(i / 4)], itemDiv: itemDivs[parseInt(i / 4)], lastDirection, resizeScale }));
-  // }
+  
+  
+  //On Board Images Resizing
+  for (let i = 0; i < resizeBoxes.length; i++) {
+   resizeBoxes[i].addEventListener("mousedown", () => console.log(`Clicked resizeBox${i}`));
+   resizeBoxes[i].addEventListener("mousedown", (e) => handleResizeStart(e, { i: parseInt(i / 4), direction: i % 4 === 0 ? "TL" : i % 4 === 1 ? "TR" : i % 4 === 2 ? "BL" : "BR", isResizing, lastScales, allowItemResize, resizeLastX, item: items[parseInt(i / 4)], itemDiv: itemDivs[parseInt(i / 4)], lastDirection, resizeScale }));
+  }
 
   // Context Menu
   for (let i = 1; i < items.length; i++) {
