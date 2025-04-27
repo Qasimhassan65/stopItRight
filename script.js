@@ -1482,7 +1482,7 @@ if (snapshot !== "true" && snapshot !== true) {
   const blanksData = createBlanksInWords();
 
   // Setup drag-and-drop for letters
-  //setupDragAndDrop(items, blanksData);
+  setupDragAndDrop(items, blanksData);
 
   //console.log("Resize Boxes: ", resizeBoxes);
 
@@ -1609,7 +1609,7 @@ if (snapshot !== "true" && snapshot !== true) {
     }).then(() => {
       //arrangeWordItems();
       //const blanksData = createBlanksInWords();
-      //setupDragAndDrop(items, blanksData);
+      setupDragAndDrop(items, blanksData);
       remainingItems = document.querySelectorAll('[id^="worditem"][id$="Text"]').length;
       itemsLeftNumber.innerHTML = remainingItems;
     });
@@ -1935,7 +1935,7 @@ if (snapshot !== "true" && snapshot !== true) {
       itemsLeftNumber.innerHTML = remainingItems;
 
       // Reinitialize drag-and-drop and store the new handlers
-      //setupDragAndDrop(items, blanksData);
+      setupDragAndDrop(items, blanksData);
 
     
       // Reset UI elements
