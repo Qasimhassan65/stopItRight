@@ -232,7 +232,7 @@ const generateAlphabetItems = (items, itemDivs, isItemCollected) => {
     
     console.log("Generating alphabets: " + (inEdit ? "Div" : "Span"));
 
-    const itemDiv = document.createElement("div");
+    const itemDiv = document.createElement(inEdit ? "Div" : "Span");
     itemDiv.id = `alphabetcontainerdivItem${index + 1}`;
     itemDiv.style.cssText = `
       position: absolute;
@@ -311,85 +311,54 @@ const createBlanksInWords = () => {
   const wordSpans = document.querySelectorAll('[id^="worditem"][id$="Text"]');
   let totalBlanks = 0;
 
-  // Step 1: First restore all words to their original text
+  //console.log("Starting createBlanksInWords. Word spans found:", wordSpans.length);
+
   wordSpans.forEach((wordSpan, i) => {
     if (!wordSpan) return;
 
     const wordContainer = wordSpan.closest('[id^="wordscontainerdivItem"]');
     if (!wordContainer || wordContainer.style.display === "none") return;
 
-    // Find the original word from the dictionary
-    // Extract the index number from the ID (e.g., "worditem3Text" -> 3)
     const indexMatch = wordSpan.id.match(/worditem(\d+)Text/);
     if (indexMatch && indexMatch[1]) {
-      const index = parseInt(indexMatch[1], 10) - 1; // Convert to 0-based for array access
-      
-      // Get the corresponding dictionary item
-      // We need to adjust the index based on how items were generated
-      if (index >= 0 && index < wordSpans.length) {
-        // Get the current displayed word text
-        const currentText = wordSpan.textContent.trim();
-        
-        // If word contains blanks (underscores), restore it from dictionary
-        if (currentText.includes('_')) {
-          const originalWord = gameDictionary[index % gameDictionary.length].text;
-          wordSpan.textContent = originalWord;
-        }
+      const index = parseInt(indexMatch[1], 10) - 1;
+      //console.log(`Processing word span ID=${wordSpan.id}, Index=${index}`);
+
+      const currentText = wordSpan.textContent.trim();
+      //console.log(`Current text: ${currentText}`);
+
+      if (currentText.includes('_')) {
+        const dictIndex = wordindexs[index] !== undefined ? wordindexs[index] : index % gameDictionary.length;
+        const originalWord = gameDictionary[dictIndex]?.text || "Unknown";
+        //console.log(`Restoring word: Index=${index}, Dictionary Index=${dictIndex}, Original Word=${originalWord}`);
+        wordSpan.textContent = originalWord;
       }
     }
   });
 
-  // Step 2: Now create new blanks
   wordSpans.forEach((wordSpan, i) => {
-    if (!wordSpan) {
-      console.warn(`Word span at index ${i} is null or undefined.`);
-      return;
-    }
-
-    const wordContainer = wordSpan.closest('[id^="wordscontainerdivItem"]');
-    if (!wordContainer || wordContainer.style.display === "none") {
-      return;
-    }
-
+    // Existing code...
+    const indexMatch = wordSpan.id.match(/worditem(\d+)Text/);
+    const index = indexMatch ? parseInt(indexMatch[1], 10) - 1 : i;
+    const dictIndex = wordindexs[index] !== undefined ? wordindexs[index] : index % gameDictionary.length;
     const originalWord = wordSpan.textContent.trim();
-    if (!originalWord) {
-      console.warn(`Text content for word span at index ${i} is empty.`);
-      return;
-    }
+
+    //console.log(`Creating blanks for: ID=${wordSpan.id}, Index=${index}, Dictionary Index=${dictIndex}, Word=${originalWord}`);
 
     const wordChars = originalWord.split("");
-    const wordLength = wordChars.length;
-    if (wordLength < 2) {
-      console.warn(`Word at index ${i} is too short: ${originalWord}`);
-      return;
-    }
-
-    const maxBlanks = Math.min(2, wordLength); // Allow 1-2 blanks
+    const maxBlanks = Math.min(2, wordChars.length);
     const numBlanks = Math.floor(Math.random() * maxBlanks) + 1;
-
     const blankPositions = [];
     const validPositions = wordChars
       .map((char, idx) => ({ char, idx }))
-      .filter(({ char }) => char.trim() !== "") // Ensure character isn't whitespace
+      .filter(({ char }) => char.trim() !== "")
       .map(({ idx }) => idx);
-
-    if (validPositions.length === 0) {
-      console.warn(`No valid letters in word at index ${i}: ${originalWord}`);
-      return;
-    }
 
     while (blankPositions.length < numBlanks && validPositions.length > 0) {
       const randomIdx = Math.floor(Math.random() * validPositions.length);
       const pos = validPositions.splice(randomIdx, 1)[0];
       blankPositions.push(pos);
     }
-
-    if (blankPositions.length === 0) {
-      console.warn(`Could not select blank positions for word at index ${i}: ${originalWord}`);
-      return;
-    }
-
-    blankPositions.sort((a, b) => a - b);
 
     const expectedLetters = blankPositions.map(pos => wordChars[pos].toUpperCase());
     blankPositions.forEach(pos => {
@@ -398,6 +367,8 @@ const createBlanksInWords = () => {
 
     const newText = wordChars.join("");
     wordSpan.textContent = newText;
+
+    //console.log(`Blanks created: Word=${newText}, Blank Positions=${blankPositions}, Expected Letters=${expectedLetters}`);
 
     blanksData.push({
       wordId: wordSpan.id,
@@ -409,10 +380,9 @@ const createBlanksInWords = () => {
     totalBlanks += blankPositions.length;
   });
 
-  // Update remaining items count
   remainingItems = totalBlanks;
   itemsLeftNumber.innerHTML = remainingItems;
-  console.log(`Total blanks set: ${remainingItems}`);
+  //console.log(`Total blanks set: ${remainingItems}, Blanks Data:`, blanksData);
 
   return blanksData;
 };
@@ -548,25 +518,24 @@ const setupDragAndDrop = (items, blanksData) => {
   currentDropHandler = dropHandler;
 };
 
+let globalZIndex = 1000; // Start from 1000
 
 function addDragListenersToAllItems(itemDivs, params) { 
   itemDivs.forEach((div, index) => {
-    if (div) { // Include all divs, including btnDiv
+    if (div) { 
       // Determine the type based on whether the div is btnDiv
       const dragType = div.id.includes("btnDiv") ? "button" : "item";
 
       div.addEventListener("mousedown", (e) => {
         if (params.isTooltipOpen.value || !params.isEditing.value) return;
-        // Debug log for drag start
-        const innerItem = div.querySelector(`[id^="wordscontaineritem"] , [id^="alphabetcontainer"]`);
-        // console.log(`Drag started on container div:`, {
-        //   containerId: div.id,
-        //   index: index,
-        //   innerItemId: innerItem ? innerItem.id : "No inner item",
-        //   dragType: dragType,
-        //   eventType: "mousedown",
-        //   position: { x: e.clientX, y: e.clientY }
-        // });
+
+        // Increase the z-index globally for each new click
+        globalZIndex++;
+        div.style.zIndex = globalZIndex; // Set the highest z-index for this div
+        //console.log(`Z-index set to ${globalZIndex} for ${div.id}`);  
+
+        const innerItem = div.querySelector(`[id^="wordscontaineritem"], [id^="alphabetcontainer"]`);
+
         handleDragStart(e, {
           i: index,
           targetDiv: div,
@@ -580,8 +549,8 @@ function addDragListenersToAllItems(itemDivs, params) {
           deltaX: params.deltaX,
           deltaY: params.deltaY,
           isEditing: params.isEditing,
-          type: dragType, // Use "button" for btnDiv, "item" for others
-          subType: "text", // Required by handleDragStart
+          type: dragType,
+          subType: "text",
           placeBack: true,
           btnLastX: params.btnLastX,
           btnLastY: params.btnLastY
@@ -590,16 +559,9 @@ function addDragListenersToAllItems(itemDivs, params) {
 
       div.addEventListener("mouseup", (e) => {
         if (params.isTooltipOpen.value || !params.isEditing.value) return;
-        // Debug log for drag end
-        const innerItem = div.querySelector(`[id^="wordscontaineritem"] , [id^="alphabetcontainer"]`);
-        // console.log(`Drag ended on container div:`, {
-        //   containerId: div.id,
-        //   index: index,
-        //   innerItemId: innerItem ? innerItem.id : "No inner item",
-        //   dragType: dragType,
-        //   eventType: "mouseup",
-        //   position: { x: e.clientX, y: e.clientY }
-        // });
+
+        const innerItem = div.querySelector(`[id^="wordscontaineritem"], [id^="alphabetcontainer"]`);
+
         handleDragEnd(e, {
           i: index,
           targetDiv: div,
@@ -613,8 +575,8 @@ function addDragListenersToAllItems(itemDivs, params) {
           deltaX: params.deltaX,
           deltaY: params.deltaY,
           isEditing: params.isEditing,
-          type: dragType, // Use "button" for btnDiv, "item" for others
-          subType: "text", // Required by handleDragEnd
+          type: dragType,
+          subType: "text",
           placeBack: true,
           btnLastX: params.btnLastX,
           btnLastY: params.btnLastY
@@ -630,18 +592,9 @@ function addDragListenersToAllItems(itemDivs, params) {
         })
       );
 
-      const innerItem = div.querySelector(`[id^="wordscontaineritem"] , [id^="alphabetcontainer"]`);
+      const innerItem = div.querySelector(`[id^="wordscontaineritem"], [id^="alphabetcontainer"]`);
       if (innerItem) {
         innerItem.addEventListener("contextmenu", (e) => {
-          // Debug log for contextmenu
-          console.log(`Context menu opened on inner item:`, {
-            containerId: div.id,
-            innerItemId: innerItem.id,
-            index: index,
-            dragType: dragType,
-            eventType: "contextmenu",
-            position: { x: e.clientX, y: e.clientY }
-          });
           currentItemCM = index;
           handleItemContextMenu(e, {
             isEditing: params.isEditing,
@@ -653,6 +606,7 @@ function addDragListenersToAllItems(itemDivs, params) {
     }
   });
 }
+
 
 
 
@@ -741,15 +695,26 @@ const handleAddItems = async (existingImg, imgScale) => {
 
 export const addWordItemOnScreen = (params) => {
   return new Promise((resolve) => {
+
+    console.log("Adding word item on screen");
+
     // Add the new word to gameDictionary
     gameDictionary.push({
       text: params.wordName,
       imagePath: params.addableImg.src
     });
+    const wordIndex = gameDictionary.length - 1; // Get the index of the newly added word
+    wordindexs.push(wordIndex); // Add the index to wordIndexes array
+    // console.log("Word index: " + wordIndex);
+    // console.log("Word indexes: " + wordindexs);
+    // console.log(gameDictionary)
+
 
     let latestItem = params.items.length;
     params.isAddingItems.value = false;
     hideScreen(params.itemsAdditionScreen);
+
+    
 
     // Create a container div for word item
     const div = document.createElement("div");
@@ -820,6 +785,7 @@ export const addWordItemOnScreen = (params) => {
     params.items.push(wordItemDiv);
     params.itemDivs.push(div);
     params.isItemCollected.push(false);
+    
 
     // Add event listeners
     div.addEventListener("mousedown", (e) => {
@@ -947,6 +913,34 @@ export const addLetterItemOnScreen = (params) => {
   });
 };
 
+function clearBlanks() {
+  // Get all word text spans
+  const wordSpans = document.querySelectorAll('[id^="worditem"][id$="Text"]');
+
+  wordSpans.forEach((wordSpan) => {
+    if (!wordSpan) return;
+
+    // Ensure the word span is part of a visible container
+    const wordContainer = wordSpan.closest('[id^="wordscontainerdivItem"]');
+    if (!wordContainer || wordContainer.style.display === "none") return;
+
+    // Extract the index from the word span ID (e.g., worditem3Text -> 3)
+    const indexMatch = wordSpan.id.match(/worditem(\d+)Text/);
+    if (!indexMatch || !indexMatch[1]) return;
+
+    const index = parseInt(indexMatch[1], 10) - 1;
+
+    // Get the corresponding dictionary index from wordindexs
+    const dictIndex = wordindexs[index] !== undefined ? wordindexs[index] : index % gameDictionary.length;
+
+    // Get the original word from gameDictionary
+    const originalWord = gameDictionary[dictIndex]?.text || "Unknown";
+
+    // Restore the original word
+    wordSpan.textContent = originalWord;
+  });
+}
+
 
 
 // ---------------- //
@@ -1018,8 +1012,6 @@ const getDraggedItemIndex = () => {
 // Modified deleteItem function to handle all items
 
 
-
-
 const deleteItem = (index) => {
   if (index < 0 || index >= items.length) return;
 
@@ -1083,8 +1075,238 @@ const deleteItem = (index) => {
   }
 };
 
+export const handleChangeWord = (itemIndex, params) => {
+  const wordItem = params.items[itemIndex];
+  if (!wordItem?.id.startsWith("wordscontaineritem")) {
+    console.log(`Item at index ${itemIndex} is not a word item:`, wordItem?.id);
+    return;
+  }
+
+  // Get the word index from the item ID (e.g., "wordscontaineritem3" -> 3)
+  const match = wordItem.id.match(/wordscontaineritem(\d+)/);
+  if (!match) {
+    console.error("Failed to parse word item ID:", wordItem.id);
+    return;
+  }
+  const wordId = parseInt(match[1], 10);
+  console.log(`Editing word for item ID: wordscontaineritem${wordId}`);
+
+  // Get the word text element
+  const wordTextElement = document.getElementById(`worditem${wordId}Text`);
+  if (!wordTextElement) {
+    console.error(`Word text element not found: worditem${wordId}Text`);
+    return;
+  }
+  const oldWord = wordTextElement.textContent.trim();
+  console.log(`Old word: ${oldWord}`);
+
+  // Make the span editable
+  wordTextElement.contentEditable = true;
+  wordTextElement.style.border = "2px solid #007bff";
+  wordTextElement.style.backgroundColor = "#f0f8ff";
+  wordTextElement.style.padding = "2px";
+  wordTextElement.focus();
+  console.log(`Made worditem${wordId}Text editable`);
+
+  // Function to handle word update
+  const updateWord = () => {
+    const newWord = wordTextElement.textContent.trim();
+    console.log(`New word entered: ${newWord}`);
+
+    // Validate the new word
+    if (!newWord || newWord === "") {
+      console.log("Invalid word entered:", newWord);
+      alert("Invalid word. Restoring original word.");
+      wordTextElement.textContent = oldWord;
+      wordTextElement.contentEditable = false;
+      wordTextElement.style.border = "";
+      wordTextElement.style.backgroundColor = "";
+      wordTextElement.style.padding = "";
+      return;
+    }
+
+    // Log current gameDictionary and wordindexs
+    console.log("Current gameDictionary:", JSON.stringify(params.gameDictionary, null, 2));
+    console.log("Current wordindexs:", params.wordindexs);
+
+    // Find the gameDictionary entry
+    let dictEntryIndex = -1;
+    if (params.wordindexs[wordId - 1] !== undefined) {
+      dictEntryIndex = params.wordindexs[wordId - 1];
+      console.log(`Found dictionary index via wordindexs[${wordId - 1}]: ${dictEntryIndex}`);
+    } else {
+      dictEntryIndex = params.gameDictionary.findIndex(
+        entry => entry.text.toUpperCase() === oldWord.toUpperCase()
+      );
+      console.log(`Fallback search for '${oldWord}' in gameDictionary: ${dictEntryIndex}`);
+    }
+
+    // Update the gameDictionary entry
+    if (dictEntryIndex !== -1 && params.gameDictionary[dictEntryIndex]) {
+      params.gameDictionary[dictEntryIndex].text = newWord;
+      console.log(`Updated gameDictionary[${dictEntryIndex}].text to '${newWord}'`);
+    } else {
+      console.error(`Failed to find gameDictionary entry for word: ${oldWord}`);
+      if (wordId > 0 && !params.wordindexs.includes(wordId - 1)) {
+        params.gameDictionary.push({ text: newWord, imagePath: wordItem.querySelector(`img`)?.src || "" });
+        params.wordindexs[wordId - 1] = params.gameDictionary.length - 1;
+        console.log(`Created new gameDictionary entry at index ${params.gameDictionary.length - 1}:`, params.gameDictionary[params.gameDictionary.length - 1]);
+      }
+    }
+
+    // Log updated gameDictionary
+    console.log("Updated gameDictionary:", JSON.stringify(params.gameDictionary, null, 2));
+
+    // Clean up
+    wordTextElement.contentEditable = false;
+    wordTextElement.style.border = "";
+    wordTextElement.style.backgroundColor = "";
+    wordTextElement.style.padding = "";
+    console.log(`Restored worditem${wordId}Text to non-editable state`);
+
+    // Reinitialize blanks and drag-and-drop
+    // console.log("Reinitializing blanks and drag-and-drop...");
+    // const blanksData = params.createBlanksInWords();
+    // params.setupDragAndDrop(params.items, blanksData);
+
+    // Update remaining items
+    // params.remainingItems = blanksData.reduce((sum, data) => sum + data.blankPositions.length, 0);
+    // params.itemsLeftNumber.innerHTML = params.remainingItems;
+    // console.log(`Updated remainingItems: ${params.remainingItems}`);
+  };
+
+  // Event listeners for finishing editing
+  wordTextElement.addEventListener("blur", updateWord, { once: true });
+  wordTextElement.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      wordTextElement.blur(); // Trigger blur to finalize
+    }
+  }, { once: true });
+};
+
+export const handleChangeImage = (event, itemIndex, params) => {
+  const wordItem = params.items[itemIndex];
+  if (!wordItem?.id.startsWith("wordscontaineritem")) {
+    console.log(`Item at index ${itemIndex} is not a word item:`, wordItem?.id);
+    return;
+  }
+
+  // Get the word index from the item ID (e.g., "wordscontaineritem3" -> 3)
+  const match = wordItem.id.match(/wordscontaineritem(\d+)/);
+  if (!match) {
+    console.error("Failed to parse word item ID:", wordItem.id);
+    return;
+  }
+  const wordId = parseInt(match[1], 10);
+  console.log(`Changing image for item ID: wordscontaineritem${wordId}`);
+
+  // Get the image element
+  const imageElement = document.getElementById(`worditem${wordId}Image`);
+  if (!imageElement) {
+    console.error(`Image element not found: worditem${wordId}Image`);
+    return;
+  }
+  const oldImagePath = imageElement.src;
+  console.log(`Old image path: ${oldImagePath}`);
+
+  // Read the uploaded file
+  const file = event.target.files[0];
+  if (!file) {
+    console.log("No file selected");
+    return;
+  }
+
+  const reader = new FileReader();
+  reader.onload = () => {
+    const newImagePath = reader.result;
+    console.log(`New image path: ${newImagePath}`);
+
+    // Update the image in the DOM
+    imageElement.src = newImagePath;
+    console.log(`Updated DOM: worditem${wordId}Image src set to '${newImagePath}'`);
+
+    // Log current gameDictionary and wordindexs
+    console.log("Current gameDictionary:", JSON.stringify(params.gameDictionary, null, 2));
+    console.log("Current wordindexs:", params.wordindexs);
+
+    // Find the gameDictionary entry
+    let dictEntryIndex = -1;
+    if (params.wordindexs[wordId - 1] !== undefined) {
+      dictEntryIndex = params.wordindexs[wordId - 1];
+      console.log(`Found dictionary index via wordindexs[${wordId - 1}]: ${dictEntryIndex}`);
+    } else {
+      // Fallback: Search gameDictionary for oldImagePath or word text
+      const wordTextElement = document.getElementById(`worditem${wordId}Text`);
+      const wordText = wordTextElement?.textContent.trim();
+      dictEntryIndex = params.gameDictionary.findIndex(
+        entry => entry.imagePath === oldImagePath || 
+                (wordText && entry.text.toUpperCase() === wordText.toUpperCase())
+      );
+      console.log(`Fallback search in gameDictionary: ${dictEntryIndex}`);
+    }
+
+    // Update the gameDictionary entry
+    if (dictEntryIndex !== -1 && params.gameDictionary[dictEntryIndex]) {
+      params.gameDictionary[dictEntryIndex].imagePath = newImagePath;
+      console.log(`Updated gameDictionary[${dictEntryIndex}].imagePath to '${newImagePath}'`);
+    } else {
+      console.error(`Failed to find gameDictionary entry for image: ${oldImagePath}`);
+      // Create a new entry if wordId is valid
+      if (wordId > 0 && !params.wordindexs.includes(wordId - 1)) {
+        const wordTextElement = document.getElementById(`worditem${wordId}Text`);
+        const wordText = wordTextElement?.textContent.trim() || "";
+        params.gameDictionary.push({ text: wordText, imagePath: newImagePath });
+        params.wordindexs[wordId - 1] = params.gameDictionary.length - 1;
+        console.log(`Created new gameDictionary entry at index ${params.gameDictionary.length - 1}:`, params.gameDictionary[params.gameDictionary.length - 1]);
+      }
+    }
+
+    // Log updated gameDictionary
+    console.log("Updated gameDictionary:", JSON.stringify(params.gameDictionary, null, 2));
+  };
+  reader.readAsDataURL(file);
+};
 
 // Updated handleDeleteBtnMouseUp to handle all draggable items
+// const handleDeleteBtnMouseUp = () => {
+//   if (!isDragging.value || isResizing.value) {
+//     playSound(wrongSound);
+//     binTooltip.style.display = binTooltipRectangle.style.display = "block";
+//     setTimeout(() => {
+//       binTooltip.style.display = binTooltipRectangle.style.display = "none";
+//     }, 5000);
+//     return;
+//   }
+
+//   const targetIndex = getDraggedItemIndex();
+//   if (targetIndex === null || targetIndex === 0) { // Prevent deleting the tooltip button (index 0)
+//     playSound(wrongSound);
+//     disallowDelete({
+//       targetDiv: itemDivs[targetIndex] || btnDiv,
+//       lastX: targetIndex === 0 ? btnLastX : savedX,
+//       lastY: targetIndex === 0 ? btnLastY : savedY,
+//       i: targetIndex,
+//       type: targetIndex === 0 ? "button" : "item",
+//       isDragging,
+//       savedX,
+//       savedY,
+//       allowItemMove
+//     });
+//     return;
+//   }
+
+//   // Delete the item
+//   playSound(deleteSound);
+//   deleteItem(targetIndex);
+
+//   // Update remaining items count
+//   if (!items[targetIndex].id.startsWith("alphabetcontaineritem")) {
+//     remainingItems = document.querySelectorAll('[id^="worditem"][id$="Text"]').length;
+//     itemsLeftNumber.innerHTML = remainingItems;
+//   }
+// };
+
 const handleDeleteBtnMouseUp = () => {
   if (!isDragging.value || isResizing.value) {
     playSound(wrongSound);
@@ -1112,17 +1334,50 @@ const handleDeleteBtnMouseUp = () => {
     return;
   }
 
+  // Check if the item is a letter and if it's used in active words
+  const isLetterItem = items[targetIndex]?.id.startsWith("alphabetcontainer");
+  if (isLetterItem) {
+    const letterIdMatch = items[targetIndex]?.id.match(/alphabetcontainer(\d+)/);
+    const letterIndex = letterIdMatch ? parseInt(letterIdMatch[1], 10) : null;
+    if (letterIndex) {
+      const letterTextElement = document.getElementById(`alphabetitem${letterIndex}Text`);
+      const letterText = letterTextElement ? letterTextElement.textContent.toUpperCase() : null;
+
+      // Check if the letter is used in any active word from wordindexs
+      const isLetterUsed = wordindexs.some(dictIndex => {
+        const word = gameDictionary[dictIndex]?.text.toUpperCase();
+        return word && word.includes(letterText);
+      });
+
+      if (isLetterUsed) {
+        // Disallow deletion of the letter
+        playSound(wrongSound);
+        disallowDelete({
+          targetDiv: itemDivs[targetIndex],
+          lastX: savedX,
+          lastY: savedY,
+          i: targetIndex,
+          type: "item",
+          isDragging,
+          savedX,
+          savedY,
+          allowItemMove
+        });
+        return;
+      }
+    }
+  }
+
   // Delete the item
   playSound(deleteSound);
   deleteItem(targetIndex);
 
-  // Update remaining items count
-  if (!items[targetIndex].id.startsWith("alphabetcontaineritem")) {
+  // Update remaining items count only for word items
+  if (!items[targetIndex].id.startsWith("alphabetcontainer")) {
     remainingItems = document.querySelectorAll('[id^="worditem"][id$="Text"]').length;
     itemsLeftNumber.innerHTML = remainingItems;
   }
 };
-
 // ----------- //
 //  SAVE GAME  //
 // ----------- //
@@ -1476,6 +1731,8 @@ if (snapshot !== "true" && snapshot !== true) {
   //Generating the alphabet items
   generateAlphabetItems(items, itemDivs, isItemCollected);
 
+  console.log("wordindex from dictionary: " + wordindexs);
+
   // Add blanks to words
   const blanksData = createBlanksInWords();
 
@@ -1744,82 +2001,84 @@ if (snapshot !== "true" && snapshot !== true) {
   
     // If we were NOT editing before, and now we ARE editing (means entered full edit mode)
     if (!isCurrentlyEditing && isNowEditing) {
+      clearBlanks();
       // Clear existing arrays
-      items.length = 0;
-      itemDivs.length = 0;
-      isItemCollected.length = 0;
+      // items.length = 0;
+      // itemDivs.length = 0;
+      // isItemCollected.length = 0;
   
-      // Push the btn and btnDiv again
-      items.push(document.getElementById("btn"));
-      itemDivs.push(document.getElementById("btnDiv"));
+      // // Push the btn and btnDiv again
+      // items.push(document.getElementById("btn"));
+      // itemDivs.push(document.getElementById("btnDiv"));
   
-      // Generate new random word items
-      wordindexs = generateRandomWordItems(items, itemDivs, isItemCollected, gameDictionary.length);
+      // // Generate new random word items
+      // wordindexs = generateRandomWordItems(items, itemDivs, isItemCollected, gameDictionary.length);
   
-      generateAlphabetItems(items, itemDivs, isItemCollected);
+      // //console.log("beof")
+      // generateAlphabetItems(items, itemDivs, isItemCollected);
 
-      const btn = document.getElementById('btn');
-      if (btn) {
-        const tl = document.getElementById(`resizeBox0TL`);
-        const tr = document.getElementById(`resizeBox0TR`);
-        const bl = document.getElementById(`resizeBox0BL`);
-        const br = document.getElementById(`resizeBox0BR`);
+      // const btn = document.getElementById('btn');
+      // if (btn) {
+      //   const tl = document.getElementById(`resizeBox0TL`);
+      //   const tr = document.getElementById(`resizeBox0TR`);
+      //   const bl = document.getElementById(`resizeBox0BL`);
+      //   const br = document.getElementById(`resizeBox0BR`);
     
-        // Check if any resize box is missing and log the relevant info
-        if (!tl || !tr || !bl || !br) {
-          console.log(`Missing resize boxes for btn item at index 0:`);
-          if (!tl) console.log(`  - TL box missing`);
-          if (!tr) console.log(`  - TR box missing`);
-          if (!bl) console.log(`  - BL box missing`);
-          if (!br) console.log(`  - BR box missing`);
-        } else {
-          resizeBoxes.push(tl, tr, bl, br);
-        }
-      }
+      //   // Check if any resize box is missing and log the relevant info
+      //   if (!tl || !tr || !bl || !br) {
+      //     console.log(`Missing resize boxes for btn item at index 0:`);
+      //     if (!tl) console.log(`  - TL box missing`);
+      //     if (!tr) console.log(`  - TR box missing`);
+      //     if (!bl) console.log(`  - BL box missing`);
+      //     if (!br) console.log(`  - BR box missing`);
+      //   } else {
+      //     resizeBoxes.push(tl, tr, bl, br);
+      //   }
+      // }
     
-      // Handle alphabet items starting from index 1 to 26
-      for (let i = 1; i <= letterlist.length; i++) {
-        const alphabetItem = document.getElementById(`alphabetcontainer${i}`);
-        if (alphabetItem) {
-          const tl = document.getElementById(`resizeBox${i}TL`);
-          const tr = document.getElementById(`resizeBox${i}TR`);
-          const bl = document.getElementById(`resizeBox${i}BL`);
-          const br = document.getElementById(`resizeBox${i}BR`);
+      // // Handle alphabet items starting from index 1 to 26
+      // for (let i = 1; i <= letterlist.length; i++) {
+      //   const alphabetItem = document.getElementById(`alphabetcontainer${i}`);
+      //   if (alphabetItem) {
+      //     const tl = document.getElementById(`resizeBox${i}TL`);
+      //     const tr = document.getElementById(`resizeBox${i}TR`);
+      //     const bl = document.getElementById(`resizeBox${i}BL`);
+      //     const br = document.getElementById(`resizeBox${i}BR`);
     
-          // Check if any resize box is missing and log the relevant info
-          if (!tl || !tr || !bl || !br) {
-            console.log(`Missing resize boxes for alphabet item at index ${i}:`);
-            if (!tl) console.log(`  - TL box missing`);
-            if (!tr) console.log(`  - TR box missing`);
-            if (!bl) console.log(`  - BL box missing`);
-            if (!br) console.log(`  - BR box missing`);
-          } else {
-            resizeBoxes.push(tl, tr, bl, br);
-          }
-        }
-      }
+      //     // Check if any resize box is missing and log the relevant info
+      //     if (!tl || !tr || !bl || !br) {
+      //       console.log(`Missing resize boxes for alphabet item at index ${i}:`);
+      //       if (!tl) console.log(`  - TL box missing`);
+      //       if (!tr) console.log(`  - TR box missing`);
+      //       if (!bl) console.log(`  - BL box missing`);
+      //       if (!br) console.log(`  - BR box missing`);
+      //     } else {
+      //       resizeBoxes.push(tl, tr, bl, br);
+      //     }
+      //   }
+      // }
     
-      // Handle word items starting from index 1 to 4
-      for (let i = 1; i <= gameDictionary.length; i++) {
-        const wordItem = document.getElementById(`wordscontaineritem${i}`);
-        if (wordItem) {
-          const tl = document.getElementById(`resizeBox${i}TL`);
-          const tr = document.getElementById(`resizeBox${i}TR`);
-          const bl = document.getElementById(`resizeBox${i}BL`);
-          const br = document.getElementById(`resizeBox${i}BR`);
+      // // Handle word items starting from index 1 to 4
+      // for (let i = 1; i <= gameDictionary.length; i++) {
+      //   const wordItem = document.getElementById(`wordscontaineritem${i}`);
+      //   if (wordItem) {
+      //     const tl = document.getElementById(`resizeBox${i}TL`);
+      //     const tr = document.getElementById(`resizeBox${i}TR`);
+      //     const bl = document.getElementById(`resizeBox${i}BL`);
+      //     const br = document.getElementById(`resizeBox${i}BR`);
     
-          // Check if any resize box is missing and log the relevant info
-          if (!tl || !tr || !bl || !br) {
-            console.log(`Missing resize boxes for word item at index ${i}:`);
-            if (!tl) console.log(`  - TL box missing`);
-            if (!tr) console.log(`  - TR box missing`);
-            if (!bl) console.log(`  - BL box missing`);
-            if (!br) console.log(`  - BR box missing`);
-          } else {
-            resizeBoxes.push(tl, tr, bl, br);
-          }
-        }
-      }
+      //     // Check if any resize box is missing and log the relevant info
+      //     if (!tl || !tr || !bl || !br) {
+      //       console.log(`Missing resize boxes for word item at index ${i}:`);
+      //       if (!tl) console.log(`  - TL box missing`);
+      //       if (!tr) console.log(`  - TR box missing`);
+      //       if (!bl) console.log(`  - BL box missing`);
+      //       if (!br) console.log(`  - BR box missing`);
+      //     } else {
+      //       resizeBoxes.push(tl, tr, bl, br);
+      //     }
+      //   }
+      // }
     
       //console.log(resizeBoxes);
   
@@ -1851,11 +2110,10 @@ if (snapshot !== "true" && snapshot !== true) {
       };
       addDragListenersToAllItems(itemDivs, dragParams);
       // Arrange word items
-      arrangeWordItems();
+      //arrangeWordItems();
     }
   });
   
-
   // refreshBtn.addEventListener("click", () => {
   //   const itemsLeftNumber = document.getElementById("itemsLeftNumber");
 
@@ -1884,21 +2142,21 @@ if (snapshot !== "true" && snapshot !== true) {
   
   refreshBtn.addEventListener("click", () => {
       inEdit = !inEdit;
-      console.log("In Edit Mode:", inEdit);
+      //console.log("In Edit Mode:", inEdit);
       playSound(clickSound);
       const itemsLeftNumber = document.getElementById("itemsLeftNumber");
       const wordsContainer = document.getElementById("words-container");
       const alphabetContainer = document.getElementById("alphabet-container");
 
       // --- Remove existing event listeners before clearing content ---
-      if (wordsContainer) {
-          if (currentDragOverHandler) {
-              wordsContainer.removeEventListener("dragover", currentDragOverHandler);
-          }
-          if (currentDropHandler) {
-              wordsContainer.removeEventListener("drop", currentDropHandler);
-          }
-      }
+      // if (wordsContainer) {
+      //     if (currentDragOverHandler) {
+      //         wordsContainer.removeEventListener("dragover", currentDragOverHandler);
+      //     }
+      //     if (currentDropHandler) {
+      //         wordsContainer.removeEventListener("drop", currentDropHandler);
+      //     }
+      // }
       // ----------------------------------------------------------------
 
       // Clear existing DOM elements
@@ -1922,11 +2180,11 @@ if (snapshot !== "true" && snapshot !== true) {
       // wordindexs = generateRandomWordItems(items, itemDivs, isItemCollected, worditemcounter);
 
       // // Generate alphabet items
-      // generateAlphabetItems(items, itemDivs, isItemCollected);
+      //generateAlphabetItems(items, itemDivs, isItemCollected);
 
       // Arrange word items
       //arrangeWordItems();
-
+      
       // Create blanks and update remaining items
       const blanksData = createBlanksInWords();
       remainingItems = blanksData.reduce((sum, data) => sum + data.blankPositions.length, 0);
@@ -2072,14 +2330,54 @@ if (snapshot !== "true" && snapshot !== true) {
   }
 
   // Context Menu
+  // for (let i = 1; i < items.length; i++) {
+  //   items[i].addEventListener("contextmenu", (e) => {
+  //     currentItemCM = i;
+  //     handleItemContextMenu(e, { isEditing, contextMenu, changeImageBtn });
+  //   });
+  // }
+
+  // changeImageInput.addEventListener("change", (e) => handleChangeImageUpload(e, items[currentItemCM]));
+
+  // Context Menu
   for (let i = 1; i < items.length; i++) {
-    items[i].addEventListener("contextmenu", (e) => {
-      currentItemCM = i;
-      handleItemContextMenu(e, { isEditing, contextMenu, changeImageBtn });
-    });
+    if (items[i]?.id.startsWith("wordscontaineritem")) {
+      items[i].addEventListener("contextmenu", (e) => {
+        currentItemCM = i;
+        handleItemContextMenu(e, { isEditing, contextMenu, changeImageBtn }); // Placeholder, will be updated to handleWordItemContextMenu
+      });
+    }
   }
 
-  changeImageInput.addEventListener("change", (e) => handleChangeImageUpload(e, items[currentItemCM]));
+  document.getElementById("changeImage").addEventListener("click", () => {
+    changeImageInput.click();
+    contextMenu.style.display = "none"; // Hide menu after click
+  });
+
+  // Image Input Listener
+  changeImageInput.addEventListener("change", (e) => {
+    handleChangeImage(e, currentItemCM, {
+      items,
+      gameDictionary,
+      wordindexs
+    });
+  });
+
+  //changeImageInput.addEventListener("change", (e) => handleChangeImageUpload(e, items[currentItemCM]));
+
+  // Context Menu Options
+  document.getElementById("changeWord").addEventListener("click", () => {
+    handleChangeWord(currentItemCM, {
+      items,
+      gameDictionary,
+      wordindexs,
+      createBlanksInWords,
+      setupDragAndDrop,
+      remainingItems,
+      itemsLeftNumber
+    });
+    contextMenu.style.display = "none"; // Hide menu after click
+  });
 
   document.addEventListener("click", function () {
     contextMenu.style.display = "none";
@@ -2117,30 +2415,30 @@ if (snapshot !== "true" && snapshot !== true) {
   description.addEventListener("keydown", (e) => handleDescriptionKeyDown(e));
 
   // Save Game
-  saveBtn.addEventListener("click", () => handleSaveButtonClick({ isAddingItems, itemsAdditionScreen, cleanUp: false, clickSound, settingsScreen, saveScreen }));
-  saveChangesBtn.addEventListener("click", (e) => saveGame(e, "game data"));
+  // saveBtn.addEventListener("click", () => handleSaveButtonClick({ isAddingItems, itemsAdditionScreen, cleanUp: false, clickSound, settingsScreen, saveScreen }));
+  // saveChangesBtn.addEventListener("click", (e) => saveGame(e, "game data"));
 
-  saveCloseBtn.addEventListener("click", () => handleSaveCloseButtonClick({ clickSound, saveScreen }));
-  saveGameBtn.addEventListener("click", (e) => saveGame(e, "game data"));
+  // saveCloseBtn.addEventListener("click", () => handleSaveCloseButtonClick({ clickSound, saveScreen }));
+  // saveGameBtn.addEventListener("click", (e) => saveGame(e, "game data"));
 
-  addTagBtn.addEventListener("click", () => addTagOrSetting({ targetDiv: tagsDiv, targetInput: tagInput, arr: tags }));
-  addSettingBtn.addEventListener("click", () => addTagOrSetting({ targetDiv: settingsDiv, targetInput: settingInput, arr: configurableSettings }));
+  // addTagBtn.addEventListener("click", () => addTagOrSetting({ targetDiv: tagsDiv, targetInput: tagInput, arr: tags }));
+  // addSettingBtn.addEventListener("click", () => addTagOrSetting({ targetDiv: settingsDiv, targetInput: settingInput, arr: configurableSettings }));
 
-  window.addEventListener("message", function (event) {
-    // Always check the origin of the message for security purposes
-    if (event.origin === parentUrl) {
-      if (event.data.type === "game data") {
-        initializeGame(event.data.gameData);
-      } else if (event.data.type === "game data request") {
-        saveGame(null, "game data request");
-      } else if (event.data.type === "enable button") {
-        areChangesSaved.value = false;
-        toggleSaveChangesBtn();
-      }
-    } else {
-      console.error("Untrusted origin:", event.origin);
-    }
-  });
+  // window.addEventListener("message", function (event) {
+  //   // Always check the origin of the message for security purposes
+  //   if (event.origin === parentUrl) {
+  //     if (event.data.type === "game data") {
+  //       initializeGame(event.data.gameData);
+  //     } else if (event.data.type === "game data request") {
+  //       saveGame(null, "game data request");
+  //     } else if (event.data.type === "enable button") {
+  //       areChangesSaved.value = false;
+  //       toggleSaveChangesBtn();
+  //     }
+  //   } else {
+  //     console.error("Untrusted origin:", event.origin);
+  //   }
+  // });
 
   // Initialize the game
   // initializeGame();
