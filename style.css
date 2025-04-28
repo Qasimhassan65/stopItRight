@@ -493,7 +493,7 @@ div {
   border-radius: 20px;
   position: relative;
   z-index: 1;
-  overflow: auto;
+  /* overflow: auto; */
   box-sizing: border-box;
 }
 
