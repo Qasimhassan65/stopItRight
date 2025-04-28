@@ -232,7 +232,7 @@ const generateAlphabetItems = (items, itemDivs, isItemCollected) => {
     
     console.log("Generating alphabets: " + (inEdit ? "Div" : "Span"));
 
-    const itemDiv = document.createElement(inEdit ? "Div" : "Span");
+    const itemDiv = document.createElement("div");
     itemDiv.id = `alphabetcontainerdivItem${index + 1}`;
     itemDiv.style.cssText = `
       position: absolute;
@@ -249,9 +249,10 @@ const generateAlphabetItems = (items, itemDivs, isItemCollected) => {
       { id: 'BR', style: 'right: -6px; bottom: -6px; cursor: nwse-resize;' },
     ];
 
+    console.log(wordindexs.length + index + 1);
     corners.forEach(corner => {
       const resizeBox = document.createElement("div");
-      resizeBox.id = `resizeBox${index + 1}${corner.id}`;
+      resizeBox.id = `resizeBox${wordindexs.length + index + 1}${corner.id}`;
       resizeBox.style.cssText = `
         position: absolute;
         ${corner.style}
@@ -267,6 +268,7 @@ const generateAlphabetItems = (items, itemDivs, isItemCollected) => {
       itemDiv.appendChild(resizeBox);
     });
     inEdit = false;
+    //inEdit ? "div" : "span
     const letterItem = document.createElement(inEdit ? "div" : "span");  // Use div in edit mode, span in playing mode
     letterItem.id = `alphabetcontainer${index + 1}`;
     letterItem.className = "letter";
@@ -592,17 +594,17 @@ function addDragListenersToAllItems(itemDivs, params) {
         })
       );
 
-      const innerItem = div.querySelector(`[id^="wordscontaineritem"], [id^="alphabetcontainer"]`);
-      if (innerItem) {
-        innerItem.addEventListener("contextmenu", (e) => {
-          currentItemCM = index;
-          handleItemContextMenu(e, {
-            isEditing: params.isEditing,
-            contextMenu,
-            changeImageBtn
-          });
-        });
-      }
+      // const innerItem = div.querySelector(`[id^="wordscontaineritem"], [id^="alphabetcontainer"]`);
+      // if (innerItem) {
+      //   innerItem.addEventListener("contextmenu", (e) => {
+      //     currentItemCM = index;
+      //     handleItemContextMenu(e, {
+      //       isEditing: params.isEditing,
+      //       contextMenu,
+      //       changeImageBtn
+      //     });
+      //   });
+      // }
     }
   });
 }
@@ -800,10 +802,10 @@ export const addWordItemOnScreen = (params) => {
 
     div.addEventListener("click", () => handleElementClick({ currSelectedElement, element: div, isEditing: params.isEditing, isTooltipOpen: params.isTooltipOpen }));
 
-    wordItemDiv.addEventListener("contextmenu", (e) => {
-      currentItemCM = latestItem;
-      handleItemContextMenu(e, { isEditing: params.isEditing, contextMenu, changeImageBtn });
-    });
+    // wordItemDiv.addEventListener("contextmenu", (e) => {
+    //   currentItemCM = latestItem;
+    //   handleItemContextMenu(e, { isEditing: params.isEditing, contextMenu, changeImageBtn });
+    // });
 
     resolve();
   });
@@ -904,10 +906,10 @@ export const addLetterItemOnScreen = (params) => {
       letterItem.classList.remove("dragging");
     });
 
-    letterItem.addEventListener("contextmenu", (e) => {
-      currentItemCM = latestItem;
-      handleItemContextMenu(e, { isEditing: params.isEditing, contextMenu, changeImageBtn });
-    });
+    // letterItem.addEventListener("contextmenu", (e) => {
+    //   currentItemCM = latestItem;
+    //   handleItemContextMenu(e, { isEditing: params.isEditing, contextMenu, changeImageBtn });
+    // });
 
     resolve();
   });
@@ -941,6 +943,179 @@ function clearBlanks() {
   });
 }
 
+function customHandleResizeStart(event, params) {
+  // Destructure parameters
+  const {
+    i, // Item index
+    direction, // Resize corner: TL, TR, BL, BR
+    isResizing, // { value: boolean }
+    lastScales, // Array of scale factors
+    allowItemResize, // Array to track resizing item
+    resizeLastX, // { value: number } for last mouse X
+    item, // DOM element (e.g., wordscontaineritem${i})
+    itemDiv, // Container div (e.g., wordscontainerdivItem${i})
+    lastDirection, // { value: string } for last resize direction
+    resizeScale // { value: number } for current scale
+  } = params;
+
+  // Prevent default to avoid text selection
+  event.preventDefault();
+
+  // Only allow resizing in edit mode and if not already resizing or dragging
+  if (!isEditing.value || isResizing.value || isDragging.value) {
+    console.log("Resize blocked: isEditing=", isEditing.value, "isResizing=", isResizing.value, "isDragging=", isDragging.value);
+    return;
+  }
+
+  // Log start of resizing
+  console.log(`Starting resize for item ${i}, direction: ${direction}`);
+
+  // Set resizing state
+  isResizing.value = true;
+  allowItemResize[i] = true;
+  for (let j = 0; j < allowItemResize.length; j++) {
+    if (j !== i) allowItemResize[j] = false; // Ensure only one item is resized
+  }
+  resizeLastX.value = event.clientX; // Removed targetWidth scaling for simplicity
+  lastDirection.value = direction;
+
+  // Initialize scale if not set
+  if (!lastScales[i]) {
+    lastScales[i] = 1.0;
+  }
+  resizeScale.value = lastScales[i];
+
+  // Set cursor style
+  const cursorStyle = direction === "TL" || direction === "BR" ? "nwse-resize" : "nesw-resize";
+  document.body.style.cursor = cursorStyle;
+  item.style.cursor = cursorStyle;
+
+  // Set transform origin based on resize direction
+  let transformOrigin;
+  switch (direction) {
+    case "TL":
+      transformOrigin = "top left";
+      break;
+    case "TR":
+      transformOrigin = "top right";
+      break;
+    case "BL":
+      transformOrigin = "bottom left";
+      break;
+    case "BR":
+      transformOrigin = "bottom right";
+      break;
+  }
+  itemDiv.style.transformOrigin = transformOrigin;
+
+  // Initial position adjustment to prevent shifting (based on original function)
+  const currentScale = lastScales[i];
+  const itemWidth = item.offsetWidth;
+  const itemHeight = item.offsetHeight + 4; // Match original offset
+  let top = parseFloat(itemDiv.style.top) || 0;
+  let left = parseFloat(itemDiv.style.left) || 0;
+
+  if (lastDirection.value === "TL") {
+    if (direction === "BL" || direction === "BR") {
+      top -= itemHeight * (currentScale - 1);
+    }
+    if (direction === "TR" || direction === "BR") {
+      left -= itemWidth * (currentScale - 1);
+    }
+  } else if (lastDirection.value === "TR") {
+    if (direction === "TL" || direction === "BL") {
+      left += itemWidth * (currentScale - 1);
+    }
+    if (direction === "BL" || direction === "BR") {
+      top -= itemHeight * (currentScale - 1);
+    }
+  } else if (lastDirection.value === "BL") {
+    if (direction === "TL" || direction === "TR") {
+      top += itemHeight * (currentScale - 1);
+    }
+    if (direction === "TR" || direction === "BR") {
+      left -= itemWidth * (currentScale - 1);
+    }
+  } else {
+    if (direction === "TL" || direction === "BL") {
+      left += itemWidth * (currentScale - 1);
+    }
+    if (direction === "TL" || direction === "TR") {
+      top += itemHeight * (currentScale - 1);
+    }
+  }
+  itemDiv.style.top = `${top}px`;
+  itemDiv.style.left = `${left}px`;
+
+  // Handle mouse move for resizing
+  const handleMouseMove = (moveEvent) => {
+    if (!isResizing.value || !allowItemResize[i]) {
+      console.log("Resize stopped: isResizing=", isResizing.value, "allowItemResize=", allowItemResize[i]);
+      return;
+    }
+
+    // Calculate mouse movement delta
+    const deltaX = moveEvent.clientX - resizeLastX.value;
+
+    // Determine scale change (increased sensitivity: 0.01 per pixel for noticeable resizing)
+    const isPositiveDirection = direction === "TL" || direction === "BR";
+    let scaleChange = deltaX * 0.01;
+    if (!isPositiveDirection) {
+      scaleChange = -scaleChange; // Reverse for TR and BL
+    }
+
+    // Update scale
+    let newScale = resizeScale.value + scaleChange;
+
+    // Constrain scale to prevent inversion or extreme values
+    newScale = Math.max(0.1, Math.min(newScale, 5.0));
+
+    // Apply scale to itemDiv
+    itemDiv.style.transform = `scale(${newScale})`;
+    lastScales[i] = newScale;
+
+    // Log for debugging
+    console.log(`Resizing item ${i}: deltaX=${deltaX}, scaleChange=${scaleChange}, newScale=${newScale}, transform=${itemDiv.style.transform}`);
+
+    // Update last X position
+    resizeLastX.value = moveEvent.clientX;
+
+    // Mark changes as unsaved
+    if (areChangesSaved.value) {
+      window.parent.postMessage(
+        { type: "unsaved changes", gameId: urlParams.get("gameid"), url: window.location.origin },
+        parentUrl
+      );
+      areChangesSaved.value = false;
+      toggleSaveChangesBtn();
+    }
+  };
+
+  // Handle mouse up to end resizing
+  const handleMouseUp = () => {
+    // Log end of resizing
+    console.log(`Resize ended for item ${i}, final scale: ${lastScales[i]}`);
+
+    // Clean up event listeners
+    document.removeEventListener("mousemove", handleMouseMove);
+    document.removeEventListener("mouseup", handleMouseUp);
+
+    // Reset resizing state
+    isResizing.value = false;
+    allowItemResize[i] = false;
+    resizeScale.value = lastScales[i];
+    document.body.style.cursor = "default";
+    item.style.cursor = "default";
+
+    // Update z-index
+    globalZIndex++;
+    itemDiv.style.zIndex = globalZIndex;
+  };
+
+  // Attach event listeners
+  document.addEventListener("mousemove", handleMouseMove);
+  document.addEventListener("mouseup", handleMouseUp);
+}
 
 
 // ---------------- //
@@ -1111,7 +1286,7 @@ export const handleChangeWord = (itemIndex, params) => {
   // Function to handle word update
   const updateWord = () => {
     const newWord = wordTextElement.textContent.trim();
-    console.log(`New word entered: ${newWord}`);
+    //console.log(`New word entered: ${newWord}`);
 
     // Validate the new word
     if (!newWord || newWord === "") {
@@ -1126,43 +1301,43 @@ export const handleChangeWord = (itemIndex, params) => {
     }
 
     // Log current gameDictionary and wordindexs
-    console.log("Current gameDictionary:", JSON.stringify(params.gameDictionary, null, 2));
-    console.log("Current wordindexs:", params.wordindexs);
+    //console.log("Current gameDictionary:", JSON.stringify(params.gameDictionary, null, 2));
+    //console.log("Current wordindexs:", params.wordindexs);
 
     // Find the gameDictionary entry
     let dictEntryIndex = -1;
     if (params.wordindexs[wordId - 1] !== undefined) {
       dictEntryIndex = params.wordindexs[wordId - 1];
-      console.log(`Found dictionary index via wordindexs[${wordId - 1}]: ${dictEntryIndex}`);
+      //console.log(`Found dictionary index via wordindexs[${wordId - 1}]: ${dictEntryIndex}`);
     } else {
       dictEntryIndex = params.gameDictionary.findIndex(
         entry => entry.text.toUpperCase() === oldWord.toUpperCase()
       );
-      console.log(`Fallback search for '${oldWord}' in gameDictionary: ${dictEntryIndex}`);
+      //console.log(`Fallback search for '${oldWord}' in gameDictionary: ${dictEntryIndex}`);
     }
 
     // Update the gameDictionary entry
     if (dictEntryIndex !== -1 && params.gameDictionary[dictEntryIndex]) {
       params.gameDictionary[dictEntryIndex].text = newWord;
-      console.log(`Updated gameDictionary[${dictEntryIndex}].text to '${newWord}'`);
+      //console.log(`Updated gameDictionary[${dictEntryIndex}].text to '${newWord}'`);
     } else {
       console.error(`Failed to find gameDictionary entry for word: ${oldWord}`);
       if (wordId > 0 && !params.wordindexs.includes(wordId - 1)) {
         params.gameDictionary.push({ text: newWord, imagePath: wordItem.querySelector(`img`)?.src || "" });
         params.wordindexs[wordId - 1] = params.gameDictionary.length - 1;
-        console.log(`Created new gameDictionary entry at index ${params.gameDictionary.length - 1}:`, params.gameDictionary[params.gameDictionary.length - 1]);
+        //console.log(`Created new gameDictionary entry at index ${params.gameDictionary.length - 1}:`, params.gameDictionary[params.gameDictionary.length - 1]);
       }
     }
 
     // Log updated gameDictionary
-    console.log("Updated gameDictionary:", JSON.stringify(params.gameDictionary, null, 2));
+    //console.log("Updated gameDictionary:", JSON.stringify(params.gameDictionary, null, 2));
 
     // Clean up
     wordTextElement.contentEditable = false;
     wordTextElement.style.border = "";
     wordTextElement.style.backgroundColor = "";
     wordTextElement.style.padding = "";
-    console.log(`Restored worditem${wordId}Text to non-editable state`);
+    //console.log(`Restored worditem${wordId}Text to non-editable state`);
 
     // Reinitialize blanks and drag-and-drop
     // console.log("Reinitializing blanks and drag-and-drop...");
@@ -1186,55 +1361,58 @@ export const handleChangeWord = (itemIndex, params) => {
 };
 
 export const handleChangeImage = (event, itemIndex, params) => {
+  //console.log("function handleChangeImage called");
+  //console.log(`handleChangeImage called for item index: ${itemIndex}, event timestamp: ${event.timeStamp}`);
   const wordItem = params.items[itemIndex];
   if (!wordItem?.id.startsWith("wordscontaineritem")) {
-    console.log(`Item at index ${itemIndex} is not a word item:`, wordItem?.id);
+    //console.log(`Item at index ${itemIndex} is not a word item:`, wordItem?.id);
     return;
   }
 
   // Get the word index from the item ID (e.g., "wordscontaineritem3" -> 3)
   const match = wordItem.id.match(/wordscontaineritem(\d+)/);
   if (!match) {
-    console.error("Failed to parse word item ID:", wordItem.id);
+    //console.error("Failed to parse word item ID:", wordItem.id);
     return;
   }
   const wordId = parseInt(match[1], 10);
-  console.log(`Changing image for item ID: wordscontaineritem${wordId}`);
+  //console.log(`Changing image for item ID: wordscontaineritem${wordId}`);
 
   // Get the image element
   const imageElement = document.getElementById(`worditem${wordId}Image`);
   if (!imageElement) {
-    console.error(`Image element not found: worditem${wordId}Image`);
+    //console.error(`Image element not found: worditem${wordId}Image`);
     return;
   }
   const oldImagePath = imageElement.src;
-  console.log(`Old image path: ${oldImagePath}`);
+  //console.log(`Old image path: ${oldImagePath}`);
 
   // Read the uploaded file
   const file = event.target.files[0];
   if (!file) {
-    console.log("No file selected");
+    //console.log("No file selected");
     return;
   }
 
+  //console.log(`Processing file: ${file.name}, size: ${file.size} bytes`);
   const reader = new FileReader();
   reader.onload = () => {
     const newImagePath = reader.result;
-    console.log(`New image path: ${newImagePath}`);
+    //console.log(`FileReader onload, new image path: ${newImagePath}`);
 
     // Update the image in the DOM
     imageElement.src = newImagePath;
-    console.log(`Updated DOM: worditem${wordId}Image src set to '${newImagePath}'`);
+    //console.log(`Updated DOM: worditem${wordId}Image src set to '${newImagePath}'`);
 
     // Log current gameDictionary and wordindexs
-    console.log("Current gameDictionary:", JSON.stringify(params.gameDictionary, null, 2));
-    console.log("Current wordindexs:", params.wordindexs);
+    //console.log("Current gameDictionary:", JSON.stringify(params.gameDictionary, null, 2));
+    //console.log("Current wordindexs:", params.wordindexs);
 
     // Find the gameDictionary entry
     let dictEntryIndex = -1;
     if (params.wordindexs[wordId - 1] !== undefined) {
       dictEntryIndex = params.wordindexs[wordId - 1];
-      console.log(`Found dictionary index via wordindexs[${wordId - 1}]: ${dictEntryIndex}`);
+      //console.log(`Found dictionary index via wordindexs[${wordId - 1}]: ${dictEntryIndex}`);
     } else {
       // Fallback: Search gameDictionary for oldImagePath or word text
       const wordTextElement = document.getElementById(`worditem${wordId}Text`);
@@ -1243,27 +1421,28 @@ export const handleChangeImage = (event, itemIndex, params) => {
         entry => entry.imagePath === oldImagePath || 
                 (wordText && entry.text.toUpperCase() === wordText.toUpperCase())
       );
-      console.log(`Fallback search in gameDictionary: ${dictEntryIndex}`);
+      //console.log(`Fallback search in gameDictionary: ${dictEntryIndex}`);
     }
 
     // Update the gameDictionary entry
     if (dictEntryIndex !== -1 && params.gameDictionary[dictEntryIndex]) {
       params.gameDictionary[dictEntryIndex].imagePath = newImagePath;
-      console.log(`Updated gameDictionary[${dictEntryIndex}].imagePath to '${newImagePath}'`);
+      //console.log(`Updated gameDictionary[${dictEntryIndex}].imagePath to '${newImagePath}'`);
     } else {
-      console.error(`Failed to find gameDictionary entry for image: ${oldImagePath}`);
+      //console.error(`Failed to find gameDictionary entry for image: ${oldImagePath}`);
       // Create a new entry if wordId is valid
       if (wordId > 0 && !params.wordindexs.includes(wordId - 1)) {
         const wordTextElement = document.getElementById(`worditem${wordId}Text`);
         const wordText = wordTextElement?.textContent.trim() || "";
         params.gameDictionary.push({ text: wordText, imagePath: newImagePath });
         params.wordindexs[wordId - 1] = params.gameDictionary.length - 1;
-        console.log(`Created new gameDictionary entry at index ${params.gameDictionary.length - 1}:`, params.gameDictionary[params.gameDictionary.length - 1]);
+        //console.log(`Created new gameDictionary entry at index ${params.gameDictionary.length - 1}:`, params.gameDictionary[params.gameDictionary.length - 1]);
       }
     }
 
     // Log updated gameDictionary
-    console.log("Updated gameDictionary:", JSON.stringify(params.gameDictionary, null, 2));
+    //console.log("Updated gameDictionary:", JSON.stringify(params.gameDictionary, null, 2));
+    //console.log(`handleChangeImage completed for item index: ${itemIndex}`);
   };
   reader.readAsDataURL(file);
 };
@@ -1590,7 +1769,7 @@ let isTooltipOpen = { value: false };
 let btnLastX = { value: 60 };
 let btnLastY = { value: 50 };
 let showTooltip = { value: true };
-let btnSrc = { value: "./assets/infoDark.webp" };
+let btnSrc = { value: "./assets/info.webp" };
 
 const gameTooltip = document.getElementById("gameTooltip");
 
@@ -1744,68 +1923,81 @@ if (snapshot !== "true" && snapshot !== true) {
 
 
   // Resize Boxes
-  const btn = document.getElementById('btn');
-  if (btn) {
-    const tl = document.getElementById(`resizeBox0TL`);
-    const tr = document.getElementById(`resizeBox0TR`);
-    const bl = document.getElementById(`resizeBox0BL`);
-    const br = document.getElementById(`resizeBox0BR`);
-
-    // Check if any resize box is missing and log the relevant info
-    if (!tl || !tr || !bl || !br) {
-      console.log(`Missing resize boxes for btn item at index 0:`);
-      if (!tl) console.log(`  - TL box missing`);
-      if (!tr) console.log(`  - TR box missing`);
-      if (!bl) console.log(`  - BL box missing`);
-      if (!br) console.log(`  - BR box missing`);
-    } else {
+  console.log("items: ", items);
+  for(let i = 0; i < items.length; i++) {
+    const tl = document.getElementById(`resizeBox${i}TL`);
+    const tr = document.getElementById(`resizeBox${i}TR`);
+    const bl = document.getElementById(`resizeBox${i}BL`);
+    const br = document.getElementById(`resizeBox${i}BR`);
+    if (tl && tr && bl && br) {
       resizeBoxes.push(tl, tr, bl, br);
+    } else {
+      console.error(`Missing resize boxes for item ${i}:`, { tl, tr, bl, br });
     }
   }
 
-  // Handle alphabet items starting from index 1 to 26
-  for (let i = 1; i <= letterlist.length; i++) {
-    const alphabetItem = document.getElementById(`alphabetcontainer${i}`);
-    if (alphabetItem) {
-      const tl = document.getElementById(`resizeBox${i}TL`);
-      const tr = document.getElementById(`resizeBox${i}TR`);
-      const bl = document.getElementById(`resizeBox${i}BL`);
-      const br = document.getElementById(`resizeBox${i}BR`);
+  // const btn = document.getElementById('btn');
+  // if (btn) {
+  //   const tl = document.getElementById(`resizeBox0TL`);
+  //   const tr = document.getElementById(`resizeBox0TR`);
+  //   const bl = document.getElementById(`resizeBox0BL`);
+  //   const br = document.getElementById(`resizeBox0BR`);
 
-      // Check if any resize box is missing and log the relevant info
-      if (!tl || !tr || !bl || !br) {
-        console.log(`Missing resize boxes for alphabet item at index ${i}:`);
-        if (!tl) console.log(`  - TL box missing`);
-        if (!tr) console.log(`  - TR box missing`);
-        if (!bl) console.log(`  - BL box missing`);
-        if (!br) console.log(`  - BR box missing`);
-      } else {
-        resizeBoxes.push(tl, tr, bl, br);
-      }
-    }
-  }
+  //   // Check if any resize box is missing and log the relevant info
+  //   if (!tl || !tr || !bl || !br) {
+  //     console.log(`Missing resize boxes for btn item at index 0:`);
+  //     if (!tl) console.log(`  - TL box missing`);
+  //     if (!tr) console.log(`  - TR box missing`);
+  //     if (!bl) console.log(`  - BL box missing`);
+  //     if (!br) console.log(`  - BR box missing`);
+  //   } else {
+  //     resizeBoxes.push(tl, tr, bl, br);
+  //   }
+  // }
+
+  // // Handle alphabet items starting from index 1 to 26
+  // for (let i = 1; i <= letterlist.length; i++) {
+  //   const alphabetItem = document.getElementById(`alphabetcontainer${i}`);
+  //   if (alphabetItem) {
+  //     const tl = document.getElementById(`resizeBox${i}TL`);
+  //     const tr = document.getElementById(`resizeBox${i}TR`);
+  //     const bl = document.getElementById(`resizeBox${i}BL`);
+  //     const br = document.getElementById(`resizeBox${i}BR`);
+
+  //     // Check if any resize box is missing and log the relevant info
+  //     if (!tl || !tr || !bl || !br) {
+  //       console.log(`Missing resize boxes for alphabet item at index ${i}:`);
+  //       if (!tl) console.log(`  - TL box missing`);
+  //       if (!tr) console.log(`  - TR box missing`);
+  //       if (!bl) console.log(`  - BL box missing`);
+  //       if (!br) console.log(`  - BR box missing`);
+  //     } else {
+  //       resizeBoxes.push(tl, tr, bl, br);
+  //     }
+  //   }
+  // }
 
   // Handle word items starting from index 1 to 4
-  for (let i = 1; i <= wordindexs.length; i++) {
-    const wordItem = document.getElementById(`wordscontaineritem${i}`);
-    if (wordItem) {
-      const tl = document.getElementById(`resizeBox${i}TL`);
-      const tr = document.getElementById(`resizeBox${i}TR`);
-      const bl = document.getElementById(`resizeBox${i}BL`);
-      const br = document.getElementById(`resizeBox${i}BR`);
+  // for (let i = 0; i <= wordindexs.length; i++) {
+  //   const wordItem = document.getElementById(`wordscontaineritem${i}`);
+  //   if (wordItem) {
+  //     const tl = document.getElementById(`resizeBox${i}TL`);
+  //     const tr = document.getElementById(`resizeBox${i}TR`);
+  //     const bl = document.getElementById(`resizeBox${i}BL`);
+  //     const br = document.getElementById(`resizeBox${i}BR`);
 
-      // Check if any resize box is missing and log the relevant info
-      if (!tl || !tr || !bl || !br) {
-        console.log(`Missing resize boxes for word item at index ${i}:`);
-        if (!tl) console.log(`  - TL box missing`);
-        if (!tr) console.log(`  - TR box missing`);
-        if (!bl) console.log(`  - BL box missing`);
-        if (!br) console.log(`  - BR box missing`);
-      } else {
-        resizeBoxes.push(tl, tr, bl, br);
-      }
-    }
-  }
+  //     // Check if any resize box is missing and log the relevant info
+  //     if (!tl || !tr || !bl || !br) {
+  //       console.log(`Missing resize boxes for word item at index ${i}:`);
+  //       if (!tl) console.log(`  - TL box missing`);
+  //       if (!tr) console.log(`  - TR box missing`);
+  //       if (!bl) console.log(`  - BL box missing`);
+  //       if (!br) console.log(`  - BR box missing`);
+  //     } else {
+  //       resizeBoxes.push(tl, tr, bl, br);
+  //     }
+  //   }
+  // }
 
   //console.log(resizeBoxes);
 
@@ -2322,12 +2514,92 @@ if (snapshot !== "true" && snapshot !== true) {
   deleteBtn.addEventListener("mouseup", handleDeleteBtnMouseUp);
 
   
-  
+  // console.log("ItemsDiv: ", itemDivs);
+  // console.log("resizeBoxes: ", resizeBoxes);
   //On Board Images Resizing
   for (let i = 0; i < resizeBoxes.length; i++) {
-   resizeBoxes[i].addEventListener("click", () => console.log(`Clicked resizeBox${i}`));
+   resizeBoxes[i].addEventListener("mousedown", () => console.log(`Clicked resizeBox${i}`));
    resizeBoxes[i].addEventListener("mousedown", (e) => handleResizeStart(e, { i: parseInt(i / 4), direction: i % 4 === 0 ? "TL" : i % 4 === 1 ? "TR" : i % 4 === 2 ? "BL" : "BR", isResizing, lastScales, allowItemResize, resizeLastX, item: items[parseInt(i / 4)], itemDiv: itemDivs[parseInt(i / 4)], lastDirection, resizeScale }));
   }
+
+//   for (let i = 0; i < resizeBoxes.length; i++) {
+//     resizeBoxes[i].addEventListener("mousedown", () => console.log(`Clicked resizeBox${i}`));
+//     resizeBoxes[i].addEventListener("mousedown", (e) => customHandleResizeStart(e, { 
+//       i: parseInt(i / 4), 
+//       direction: i % 4 === 0 ? "TL" : i % 4 === 1 ? "TR" : i % 4 === 2 ? "BL" : "BR", 
+//       isResizing, 
+//       lastScales, 
+//       allowItemResize, 
+//       resizeLastX, 
+//       item: items[parseInt(i / 4)], 
+//       itemDiv: itemDivs[parseInt(i / 4)], 
+//       lastDirection, 
+//       resizeScale 
+//     }));
+//  }
+
+// for (let i = 0; i < resizeBoxes.length; i++) {
+//   // Skip if resizeBoxes[i] is null or undefined
+//   if (!resizeBoxes[i]) {
+//     console.error(`resizeBoxes[${i}] is null or undefined`);
+//     continue;
+//   }
+
+//   // Log to confirm event listener attachment
+//   console.log(`Attaching mousedown listener to resizeBox${i}, ID: ${resizeBoxes[i].id}`);
+
+//   // Determine itemIndex and direction based on resizeBoxes index
+//   let itemIndex;
+//   let direction;
+
+//   if (i < 4) {
+//     // Button: resizeBoxes[0–3] → itemsDiv[0] (btnDiv)
+//     itemIndex = 0;
+//     direction = i === 0 ? "TL" : i === 1 ? "TR" : i === 2 ? "BL" : "BR";
+//   } else if (i < 104) {
+//     // Alphabet items: resizeBoxes[4–103] → itemsDiv[5–30] (alphabetcontainerdivItem1–26)
+//     const alphabetIndex = Math.floor((i - 4) / 4) + 1; // 1 to 26
+//     itemIndex = 4 + alphabetIndex; // Maps to itemsDiv[5] to itemsDiv[30]
+//     direction = (i - 4) % 4 === 0 ? "TL" : (i - 4) % 4 === 1 ? "TR" : (i - 4) % 4 === 2 ? "BL" : "BR";
+//   } else {
+//     // Word items: resizeBoxes[104–119] → itemsDiv[1–4] (wordscontainerdivItem1–4)
+//     // Due to duplicate IDs, these may be incorrect, so we'll try to map them
+//     const wordIndex = Math.floor((i - 104) / 4) + 1; // 1 to 4
+//     itemIndex = wordIndex; // Maps to itemsDiv[1] to itemsDiv[4]
+//     direction = (i - 104) % 4 === 0 ? "TL" : (i - 104) % 4 === 1 ? "TR" : (i - 104) % 4 === 2 ? "BL" : "BR";
+
+//     // Log warning for potential duplicate ID issue
+//     console.warn(`resizeBox${i} (ID: ${resizeBoxes[i].id}) may be incorrect for word item ${wordIndex} due to duplicate IDs`);
+//   }
+
+//   // Log to verify mapping
+//   console.log(`resizeBox${i} mapped to itemIndex: ${itemIndex}, direction: ${direction}, item: ${items[itemIndex]?.id || "undefined"}`);
+
+//   // Skip if item or itemDiv is invalid
+//   if (!items[itemIndex] || !itemDivs[itemIndex]) {
+//     console.error(`Invalid item or itemDiv for resizeBox${i}, itemIndex: ${itemIndex}`);
+//     continue;
+//   }
+
+//   resizeBoxes[i].addEventListener("mousedown", () => console.log(`Clicked resizeBox${i}`));
+//   resizeBoxes[i].addEventListener("mousedown", (e) => {
+//     // Log parameters passed to handleResizeStart
+//     console.log(`mousedown on resizeBox${i}, itemIndex: ${itemIndex}, item: ${items[itemIndex]?.id || "undefined"}, itemDiv: ${itemDivs[itemIndex]?.id || "undefined"}`);
+
+//     handleResizeStart(e, {
+//       i: itemIndex,
+//       direction,
+//       isResizing,
+//       lastScales,
+//       allowItemResize,
+//       resizeLastX,
+//       item: items[itemIndex],
+//       itemDiv: itemDivs[itemIndex],
+//       lastDirection,
+//       resizeScale
+//     });
+//   });
+// }
 
   // Context Menu
   // for (let i = 1; i < items.length; i++) {
@@ -2350,12 +2622,12 @@ if (snapshot !== "true" && snapshot !== true) {
   }
 
   document.getElementById("changeImage").addEventListener("click", () => {
-    changeImageInput.click();
     contextMenu.style.display = "none"; // Hide menu after click
   });
 
   // Image Input Listener
   changeImageInput.addEventListener("change", (e) => {
+    //console.log("Change Image Input Triggered");
     handleChangeImage(e, currentItemCM, {
       items,
       gameDictionary,
