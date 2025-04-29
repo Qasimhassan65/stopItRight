@@ -10,37 +10,6 @@ import { playSound, pauseSound, hideScreen, handleDownScaling, handleUpScaling, 
 // ------------------ //
 //  HELPER FUNCTIONS  //
 // ------------------ //
-// const handleItemClick = (item) => {
-//   pauseSound(collectSound);
-
-//   if (isItemCollected[items.indexOf(item)]) return;
-
-//   isItemCollected[items.indexOf(item)] = true;
-//   remainingItems--;
-
-//   // Game won
-//   if (remainingItems === 0) {
-//     winSound.play();
-//     btn.style.display = itemsLeftNumber.style.display = itemsLeft.style.display = "none";
-//   }
-
-//   // Game not won yet
-//   else collectSound.play();
-
-//   itemsLeftNumber.innerHTML = remainingItems;
-
-//   // Animate the decrease in opacity of the item
-//   for (let j = 0; j <= 100; j++) {
-//     setTimeout(() => {
-//       item.style.opacity = 1 - j / 100;
-
-//       // After opacity reaches 0, set display to none
-//       if (j === 100) {
-//         item.style.display = "none";
-//       }
-//     }, j * 3);
-//   }
-// };
 
 function generateRandomWordItems(items, itemDivs, isItemCollected, wordItemCount) {
   const selectedIndices = [];
@@ -302,8 +271,6 @@ const generateAlphabetItems = (items, itemDivs, isItemCollected) => {
 
 
 };
-
-
 
 // ---------------- //
 // CREATE BLANKS //
@@ -609,17 +576,14 @@ function addDragListenersToAllItems(itemDivs, params) {
   });
 }
 
-
-
-
-// Helper: Show feedback
+// ---------------- //
+//  SHOW FEEDBACK   //
+// ---------------- //
 function showFeedback(isCorrect) {
   const feedback = document.createElement("div");
   feedback.className = `feedback ${isCorrect ? "correct" : "wrong"}`;
   feedback.textContent = isCorrect ? "✓ Right Answer" : "✗ Wrong Answer";
 
-  // --- Positioning relative to the game-container, above words-container ---
-  // Find the game container (assuming it's the parent of both h1 and words-container)
   const gameContainer = document.querySelector(".game-container");
 
   if (gameContainer) {
@@ -629,10 +593,8 @@ function showFeedback(isCorrect) {
     feedback.style.right = "20px"; // Distance from the right edge of the game-container (adjusting for padding)
     feedback.style.zIndex = "9999"; // Ensure it's above other elements
 
-    // Append the feedback to the game container
     gameContainer.appendChild(feedback);
   } else {
-    // Fallback to fixed positioning if game-container is not found
     console.warn("Game container not found, using fixed positioning for feedback.");
     feedback.style.position = "fixed";
     feedback.style.top = "160px";
@@ -640,13 +602,9 @@ function showFeedback(isCorrect) {
     feedback.style.zIndex = "9999";
     document.body.appendChild(feedback);
   }
-  // -------------------------------------------------------------------------
 
-  // Remove the feedback after 2 seconds
   setTimeout(() => feedback.remove(), 2000);
 }
-
-
 
 // ---------------- //
 //  ITEMS ADDITION  //
@@ -943,195 +901,9 @@ function clearBlanks() {
   });
 }
 
-function customHandleResizeStart(event, params) {
-  // Destructure parameters
-  const {
-    i, // Item index
-    direction, // Resize corner: TL, TR, BL, BR
-    isResizing, // { value: boolean }
-    lastScales, // Array of scale factors
-    allowItemResize, // Array to track resizing item
-    resizeLastX, // { value: number } for last mouse X
-    item, // DOM element (e.g., wordscontaineritem${i})
-    itemDiv, // Container div (e.g., wordscontainerdivItem${i})
-    lastDirection, // { value: string } for last resize direction
-    resizeScale // { value: number } for current scale
-  } = params;
-
-  // Prevent default to avoid text selection
-  event.preventDefault();
-
-  // Only allow resizing in edit mode and if not already resizing or dragging
-  if (!isEditing.value || isResizing.value || isDragging.value) {
-    console.log("Resize blocked: isEditing=", isEditing.value, "isResizing=", isResizing.value, "isDragging=", isDragging.value);
-    return;
-  }
-
-  // Log start of resizing
-  console.log(`Starting resize for item ${i}, direction: ${direction}`);
-
-  // Set resizing state
-  isResizing.value = true;
-  allowItemResize[i] = true;
-  for (let j = 0; j < allowItemResize.length; j++) {
-    if (j !== i) allowItemResize[j] = false; // Ensure only one item is resized
-  }
-  resizeLastX.value = event.clientX; // Removed targetWidth scaling for simplicity
-  lastDirection.value = direction;
-
-  // Initialize scale if not set
-  if (!lastScales[i]) {
-    lastScales[i] = 1.0;
-  }
-  resizeScale.value = lastScales[i];
-
-  // Set cursor style
-  const cursorStyle = direction === "TL" || direction === "BR" ? "nwse-resize" : "nesw-resize";
-  document.body.style.cursor = cursorStyle;
-  item.style.cursor = cursorStyle;
-
-  // Set transform origin based on resize direction
-  let transformOrigin;
-  switch (direction) {
-    case "TL":
-      transformOrigin = "top left";
-      break;
-    case "TR":
-      transformOrigin = "top right";
-      break;
-    case "BL":
-      transformOrigin = "bottom left";
-      break;
-    case "BR":
-      transformOrigin = "bottom right";
-      break;
-  }
-  itemDiv.style.transformOrigin = transformOrigin;
-
-  // Initial position adjustment to prevent shifting (based on original function)
-  const currentScale = lastScales[i];
-  const itemWidth = item.offsetWidth;
-  const itemHeight = item.offsetHeight + 4; // Match original offset
-  let top = parseFloat(itemDiv.style.top) || 0;
-  let left = parseFloat(itemDiv.style.left) || 0;
-
-  if (lastDirection.value === "TL") {
-    if (direction === "BL" || direction === "BR") {
-      top -= itemHeight * (currentScale - 1);
-    }
-    if (direction === "TR" || direction === "BR") {
-      left -= itemWidth * (currentScale - 1);
-    }
-  } else if (lastDirection.value === "TR") {
-    if (direction === "TL" || direction === "BL") {
-      left += itemWidth * (currentScale - 1);
-    }
-    if (direction === "BL" || direction === "BR") {
-      top -= itemHeight * (currentScale - 1);
-    }
-  } else if (lastDirection.value === "BL") {
-    if (direction === "TL" || direction === "TR") {
-      top += itemHeight * (currentScale - 1);
-    }
-    if (direction === "TR" || direction === "BR") {
-      left -= itemWidth * (currentScale - 1);
-    }
-  } else {
-    if (direction === "TL" || direction === "BL") {
-      left += itemWidth * (currentScale - 1);
-    }
-    if (direction === "TL" || direction === "TR") {
-      top += itemHeight * (currentScale - 1);
-    }
-  }
-  itemDiv.style.top = `${top}px`;
-  itemDiv.style.left = `${left}px`;
-
-  // Handle mouse move for resizing
-  const handleMouseMove = (moveEvent) => {
-    if (!isResizing.value || !allowItemResize[i]) {
-      console.log("Resize stopped: isResizing=", isResizing.value, "allowItemResize=", allowItemResize[i]);
-      return;
-    }
-
-    // Calculate mouse movement delta
-    const deltaX = moveEvent.clientX - resizeLastX.value;
-
-    // Determine scale change (increased sensitivity: 0.01 per pixel for noticeable resizing)
-    const isPositiveDirection = direction === "TL" || direction === "BR";
-    let scaleChange = deltaX * 0.01;
-    if (!isPositiveDirection) {
-      scaleChange = -scaleChange; // Reverse for TR and BL
-    }
-
-    // Update scale
-    let newScale = resizeScale.value + scaleChange;
-
-    // Constrain scale to prevent inversion or extreme values
-    newScale = Math.max(0.1, Math.min(newScale, 5.0));
-
-    // Apply scale to itemDiv
-    itemDiv.style.transform = `scale(${newScale})`;
-    lastScales[i] = newScale;
-
-    // Log for debugging
-    console.log(`Resizing item ${i}: deltaX=${deltaX}, scaleChange=${scaleChange}, newScale=${newScale}, transform=${itemDiv.style.transform}`);
-
-    // Update last X position
-    resizeLastX.value = moveEvent.clientX;
-
-    // Mark changes as unsaved
-    if (areChangesSaved.value) {
-      window.parent.postMessage(
-        { type: "unsaved changes", gameId: urlParams.get("gameid"), url: window.location.origin },
-        parentUrl
-      );
-      areChangesSaved.value = false;
-      toggleSaveChangesBtn();
-    }
-  };
-
-  // Handle mouse up to end resizing
-  const handleMouseUp = () => {
-    // Log end of resizing
-    console.log(`Resize ended for item ${i}, final scale: ${lastScales[i]}`);
-
-    // Clean up event listeners
-    document.removeEventListener("mousemove", handleMouseMove);
-    document.removeEventListener("mouseup", handleMouseUp);
-
-    // Reset resizing state
-    isResizing.value = false;
-    allowItemResize[i] = false;
-    resizeScale.value = lastScales[i];
-    document.body.style.cursor = "default";
-    item.style.cursor = "default";
-
-    // Update z-index
-    globalZIndex++;
-    itemDiv.style.zIndex = globalZIndex;
-  };
-
-  // Attach event listeners
-  document.addEventListener("mousemove", handleMouseMove);
-  document.addEventListener("mouseup", handleMouseUp);
-}
-
-
 // ---------------- //
 //  ITEMS DELETION  //
 // ---------------- //
-// const deleteItem = (index) => {
-//   delItemCount++;
-//   delItems.push(itemDivs[index]);
-
-//   itemDivs[index].style.display = "none";
-
-//   for (let i = 0; i < 4; i++) {
-//     resizeBoxes[index * 4 + i].style.display = "none";
-//   }
-// };
-
 const getDraggedItemIndex = () => {
   // Get the item being dragged
   for (let i = 0; i < allowItemMove.length; i++) {
@@ -1144,47 +916,6 @@ const getDraggedItemIndex = () => {
 
   return null;
 };
-
-// const handleDeleteBtnMouseUp = () => {
-//   // Nothing is being dragged || Something is being resized || The tooltip button is being moved || Only one item is left
-//   if (!isDragging.value || isResizing.value || allowItemMove[0] || remainingItems === 1) {
-//     playSound(wrongSound);
-
-//     // The bin was just simply clicked
-//     if (!isDragging.value) {
-//       binTooltip.style.display = binTooltipRectangle.style.display = "block";
-
-//       setTimeout(() => {
-//         binTooltip.style.display = binTooltipRectangle.style.display = "none";
-//       }, 5000);
-//     }
-
-//     // The game tooltip btn was being moved
-//     else if (allowItemMove[0]) {
-//       disallowDelete({ targetDiv: btnDiv, lastX: btnLastX, lastY: btnLastY, i: 0, type: "button", isDragging, savedX, savedY, allowItemMove });
-//     }
-
-//     // Only one item is left
-//     else if (remainingItems === 1) {
-//       let itemIndex = getDraggedItemIndex();
-//       disallowDelete({ targetDiv: itemDivs[itemIndex], lastX: savedX, lastY: savedY, i: itemIndex, type: "item", isDragging, savedX, savedY, allowItemMove });
-//     }
-
-//     return;
-//   }
-
-//   // Get the item being dragged
-//   let targetIndex = getDraggedItemIndex();
-
-//   // Delete it now
-//   playSound(deleteSound);
-//   deleteItem(targetIndex);
-
-//   remainingItems -= 1;
-//   itemsLeftNumber.innerHTML = remainingItems;
-// };
-
-// Modified deleteItem function to handle all items
 
 
 const deleteItem = (index) => {
@@ -1447,45 +1178,6 @@ export const handleChangeImage = (event, itemIndex, params) => {
   reader.readAsDataURL(file);
 };
 
-// Updated handleDeleteBtnMouseUp to handle all draggable items
-// const handleDeleteBtnMouseUp = () => {
-//   if (!isDragging.value || isResizing.value) {
-//     playSound(wrongSound);
-//     binTooltip.style.display = binTooltipRectangle.style.display = "block";
-//     setTimeout(() => {
-//       binTooltip.style.display = binTooltipRectangle.style.display = "none";
-//     }, 5000);
-//     return;
-//   }
-
-//   const targetIndex = getDraggedItemIndex();
-//   if (targetIndex === null || targetIndex === 0) { // Prevent deleting the tooltip button (index 0)
-//     playSound(wrongSound);
-//     disallowDelete({
-//       targetDiv: itemDivs[targetIndex] || btnDiv,
-//       lastX: targetIndex === 0 ? btnLastX : savedX,
-//       lastY: targetIndex === 0 ? btnLastY : savedY,
-//       i: targetIndex,
-//       type: targetIndex === 0 ? "button" : "item",
-//       isDragging,
-//       savedX,
-//       savedY,
-//       allowItemMove
-//     });
-//     return;
-//   }
-
-//   // Delete the item
-//   playSound(deleteSound);
-//   deleteItem(targetIndex);
-
-//   // Update remaining items count
-//   if (!items[targetIndex].id.startsWith("alphabetcontaineritem")) {
-//     remainingItems = document.querySelectorAll('[id^="worditem"][id$="Text"]').length;
-//     itemsLeftNumber.innerHTML = remainingItems;
-//   }
-// };
-
 const handleDeleteBtnMouseUp = () => {
   if (!isDragging.value || isResizing.value) {
     playSound(wrongSound);
@@ -1557,6 +1249,8 @@ const handleDeleteBtnMouseUp = () => {
     itemsLeftNumber.innerHTML = remainingItems;
   }
 };
+
+
 // ----------- //
 //  SAVE GAME  //
 // ----------- //
@@ -1724,7 +1418,6 @@ const letterlist = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L',
 let wordindexs = [];
 let worditemcounter = 4;
 let lettercounter = 0;
-let gameDictionaryLength = gameDictionary.length;
 let currSelectedElement = { value: null };
 let gameWon = false;
 let currentDragOverHandler = null;
@@ -1736,7 +1429,6 @@ let itemDivs = [document.getElementById("btnDiv")];
 let resizeBoxes = [];
 let isItemCollected = [];
 
-let delItems = [];
 let remainingItems = 4;
 let delItemCount = 0;
 
@@ -1870,37 +1562,7 @@ if (snapshot !== "true" && snapshot !== true) {
   //  DOCUMENT ELEMENTS  //
   // ------------------- //
 
-  // Adding Items
-  // for (let i = 1; i <= 4; i++) {
-  //   items.push(document.getElementById(`wordscontaineritem${i}`));
-  //   itemDivs.push(document.getElementById(`wordscontainerdivItem${i}`));
-  //   isItemCollected.push(false);
-  // }
-
-  //Adding Word items
-  // Assume there are 8 total items (you can adjust this number)
-
-  // Randomly select 4 unique indices
-  // while (selectedIndices.length < 4) {
-  //   const randomIndex = Math.floor(Math.random() * totalItems) + 1;
-  //   if (!selectedIndices.includes(randomIndex)) {
-  //     selectedIndices.push(randomIndex);
-  //   }
-  // }
-
-  // //Push randomly selected items
-  // for (let i = 0; i < selectedIndices.length; i++) {
-  //   const index = selectedIndices[i];
-  //   document.getElementById(`wordscontainerdivItem${index}`).style.display = "inline-block";
-  //   items.push(document.getElementById(`wordscontaineritem${index}`));
-  //   itemDivs.push(document.getElementById(`wordscontainerdivItem${index}`));
-  //   isItemCollected.push(false);
-  //   console.log(`wordscontaineritem${index}`);
-  // }
-
-
-
-
+  
   // Chosing Random words from the dictionary
   wordindexs = generateRandomWordItems(items, itemDivs, isItemCollected, worditemcounter);
 
@@ -1936,93 +1598,9 @@ if (snapshot !== "true" && snapshot !== true) {
     }
   }
 
-  // const btn = document.getElementById('btn');
-  // if (btn) {
-  //   const tl = document.getElementById(`resizeBox0TL`);
-  //   const tr = document.getElementById(`resizeBox0TR`);
-  //   const bl = document.getElementById(`resizeBox0BL`);
-  //   const br = document.getElementById(`resizeBox0BR`);
-
-  //   // Check if any resize box is missing and log the relevant info
-  //   if (!tl || !tr || !bl || !br) {
-  //     console.log(`Missing resize boxes for btn item at index 0:`);
-  //     if (!tl) console.log(`  - TL box missing`);
-  //     if (!tr) console.log(`  - TR box missing`);
-  //     if (!bl) console.log(`  - BL box missing`);
-  //     if (!br) console.log(`  - BR box missing`);
-  //   } else {
-  //     resizeBoxes.push(tl, tr, bl, br);
-  //   }
-  // }
-
-  // // Handle alphabet items starting from index 1 to 26
-  // for (let i = 1; i <= letterlist.length; i++) {
-  //   const alphabetItem = document.getElementById(`alphabetcontainer${i}`);
-  //   if (alphabetItem) {
-  //     const tl = document.getElementById(`resizeBox${i}TL`);
-  //     const tr = document.getElementById(`resizeBox${i}TR`);
-  //     const bl = document.getElementById(`resizeBox${i}BL`);
-  //     const br = document.getElementById(`resizeBox${i}BR`);
-
-  //     // Check if any resize box is missing and log the relevant info
-  //     if (!tl || !tr || !bl || !br) {
-  //       console.log(`Missing resize boxes for alphabet item at index ${i}:`);
-  //       if (!tl) console.log(`  - TL box missing`);
-  //       if (!tr) console.log(`  - TR box missing`);
-  //       if (!bl) console.log(`  - BL box missing`);
-  //       if (!br) console.log(`  - BR box missing`);
-  //     } else {
-  //       resizeBoxes.push(tl, tr, bl, br);
-  //     }
-  //   }
-  // }
-
-  // Handle word items starting from index 1 to 4
-  // for (let i = 0; i <= wordindexs.length; i++) {
-  //   const wordItem = document.getElementById(`wordscontaineritem${i}`);
-  //   if (wordItem) {
-  //     const tl = document.getElementById(`resizeBox${i}TL`);
-  //     const tr = document.getElementById(`resizeBox${i}TR`);
-  //     const bl = document.getElementById(`resizeBox${i}BL`);
-  //     const br = document.getElementById(`resizeBox${i}BR`);
-
-  //     // Check if any resize box is missing and log the relevant info
-  //     if (!tl || !tr || !bl || !br) {
-  //       console.log(`Missing resize boxes for word item at index ${i}:`);
-  //       if (!tl) console.log(`  - TL box missing`);
-  //       if (!tr) console.log(`  - TR box missing`);
-  //       if (!bl) console.log(`  - BL box missing`);
-  //       if (!br) console.log(`  - BR box missing`);
-  //     } else {
-  //       resizeBoxes.push(tl, tr, bl, br);
-  //     }
-  //   }
-  // }
-
-  //console.log(resizeBoxes);
-
-
-
-  // Add event listeners to all items
-  // for (let i = 1; i < items.length; i++) {
-  //   items[i].addEventListener("click", () => {
-  //     if (isEditing.value) return;
-  //     handleItemClick(items[i]);
-  //   });
-  // }
-
   // Items Addition
   addableImgInput.addEventListener("change", (e) => handleImageUpload(e, { targetImg: addableImg }));
 
-  // addItemBtn.addEventListener("click", () => {
-  //   if (areChangesSaved.value) {
-  //     window.parent.postMessage({ type: "unsaved changes", gameId: urlParams.get("gameid"), url: window.location.origin }, parentUrl);
-  //     areChangesSaved.value = false;
-  //     toggleSaveChangesBtn();
-  //   }
-
-  //   handleAddItems();
-  // });
 
   // Add event listener for the Word item
   addItemBtn.addEventListener("click", () => {
@@ -2054,8 +1632,6 @@ if (snapshot !== "true" && snapshot !== true) {
       btnLastX,
       btnLastY
     }).then(() => {
-      //arrangeWordItems();
-      //const blanksData = createBlanksInWords();
       setupDragAndDrop(items, blanksData);
       remainingItems = document.querySelectorAll('[id^="worditem"][id$="Text"]').length;
       itemsLeftNumber.innerHTML = remainingItems;
@@ -2135,34 +1711,6 @@ if (snapshot !== "true" && snapshot !== true) {
   editModeBtns.push(saveBtn);
   editModeBtns.push(deleteBtn);
 
-  //editModeBtn.addEventListener("click", () => handleEditModeButtonClick({ clickSound, isEditing, items, resizeBoxes, showTooltip, isTooltipOpen, btnDiv, editModeBtns, currSelectedElement, settingsScreen, btnClicks, binTooltip, binTooltipRectangle }));
-
-  // editModeBtn.addEventListener("click", () => {
-  //   const itemsLeftNumber = document.getElementById("itemsLeftNumber");
-
-  //   remainingItems = items.length - 1 - delItemCount;
-  //   itemsLeftNumber.innerHTML = remainingItems;
-
-  //   // Make all items visible again
-  //   // for (let i = 1; i < items.length; i++) {
-  //   //   items[i].style.opacity = 1;
-  //   //   items[i].style.display = "block";
-  //   // }
-
-  //   // if (isItemCollected) {
-  //   //   // Reset collection state of all items
-  //   //   for (let i = 1; i < items.length; i++) {
-  //   //     isItemCollected[i] = false;
-  //   //   }
-  //   // }
-
-  //   btnDiv.style.display = btn.style.display = itemsLeft.style.display = itemsLeftNumber.style.display = "block";
-
-  //   hideScreen(settingsScreen);
-  //   hideScreen(itemsAdditionScreen);
-  //   handleEditModeButtonClick({ game: "wrh", cursorType, clickSound, isEditing, items, resizeBoxes, isItemCollected, remainingItems, showTooltip, isTooltipOpen, btnDiv, editModeBtns, currSelectedElement, settingsScreen, btnClicks, binTooltip, binTooltipRectangle, refreshBtn });
-  // });
-
   editModeBtn.addEventListener("click", () => {
     const isCurrentlyEditing = isEditing.value; // check the current state
     inEdit = !inEdit; 
@@ -2194,86 +1742,7 @@ if (snapshot !== "true" && snapshot !== true) {
     // If we were NOT editing before, and now we ARE editing (means entered full edit mode)
     if (!isCurrentlyEditing && isNowEditing) {
       clearBlanks();
-      // Clear existing arrays
-      // items.length = 0;
-      // itemDivs.length = 0;
-      // isItemCollected.length = 0;
-  
-      // // Push the btn and btnDiv again
-      // items.push(document.getElementById("btn"));
-      // itemDivs.push(document.getElementById("btnDiv"));
-  
-      // // Generate new random word items
-      // wordindexs = generateRandomWordItems(items, itemDivs, isItemCollected, gameDictionary.length);
-  
-      // //console.log("beof")
-      // generateAlphabetItems(items, itemDivs, isItemCollected);
-
-      // const btn = document.getElementById('btn');
-      // if (btn) {
-      //   const tl = document.getElementById(`resizeBox0TL`);
-      //   const tr = document.getElementById(`resizeBox0TR`);
-      //   const bl = document.getElementById(`resizeBox0BL`);
-      //   const br = document.getElementById(`resizeBox0BR`);
-    
-      //   // Check if any resize box is missing and log the relevant info
-      //   if (!tl || !tr || !bl || !br) {
-      //     console.log(`Missing resize boxes for btn item at index 0:`);
-      //     if (!tl) console.log(`  - TL box missing`);
-      //     if (!tr) console.log(`  - TR box missing`);
-      //     if (!bl) console.log(`  - BL box missing`);
-      //     if (!br) console.log(`  - BR box missing`);
-      //   } else {
-      //     resizeBoxes.push(tl, tr, bl, br);
-      //   }
-      // }
-    
-      // // Handle alphabet items starting from index 1 to 26
-      // for (let i = 1; i <= letterlist.length; i++) {
-      //   const alphabetItem = document.getElementById(`alphabetcontainer${i}`);
-      //   if (alphabetItem) {
-      //     const tl = document.getElementById(`resizeBox${i}TL`);
-      //     const tr = document.getElementById(`resizeBox${i}TR`);
-      //     const bl = document.getElementById(`resizeBox${i}BL`);
-      //     const br = document.getElementById(`resizeBox${i}BR`);
-    
-      //     // Check if any resize box is missing and log the relevant info
-      //     if (!tl || !tr || !bl || !br) {
-      //       console.log(`Missing resize boxes for alphabet item at index ${i}:`);
-      //       if (!tl) console.log(`  - TL box missing`);
-      //       if (!tr) console.log(`  - TR box missing`);
-      //       if (!bl) console.log(`  - BL box missing`);
-      //       if (!br) console.log(`  - BR box missing`);
-      //     } else {
-      //       resizeBoxes.push(tl, tr, bl, br);
-      //     }
-      //   }
-      // }
-    
-      // // Handle word items starting from index 1 to 4
-      // for (let i = 1; i <= gameDictionary.length; i++) {
-      //   const wordItem = document.getElementById(`wordscontaineritem${i}`);
-      //   if (wordItem) {
-      //     const tl = document.getElementById(`resizeBox${i}TL`);
-      //     const tr = document.getElementById(`resizeBox${i}TR`);
-      //     const bl = document.getElementById(`resizeBox${i}BL`);
-      //     const br = document.getElementById(`resizeBox${i}BR`);
-    
-      //     // Check if any resize box is missing and log the relevant info
-      //     if (!tl || !tr || !bl || !br) {
-      //       console.log(`Missing resize boxes for word item at index ${i}:`);
-      //       if (!tl) console.log(`  - TL box missing`);
-      //       if (!tr) console.log(`  - TR box missing`);
-      //       if (!bl) console.log(`  - BL box missing`);
-      //       if (!br) console.log(`  - BR box missing`);
-      //     } else {
-      //       resizeBoxes.push(tl, tr, bl, br);
-      //     }
-      //   }
-      // }
-    
-      //console.log(resizeBoxes);
-  
+     
       // Update remaining items
       remainingItems = 0;
       itemsLeftNumber.innerHTML = remainingItems;
@@ -2301,81 +1770,17 @@ if (snapshot !== "true" && snapshot !== true) {
         btnLastY
       };
       addDragListenersToAllItems(itemDivs, dragParams);
-      // Arrange word items
-      //arrangeWordItems();
     }
   });
   
-  // refreshBtn.addEventListener("click", () => {
-  //   const itemsLeftNumber = document.getElementById("itemsLeftNumber");
-
-  //   remainingItems = items.length - 1 - delItemCount;
-  //   itemsLeftNumber.innerHTML = remainingItems;
-
-  //   // Make all items visible again
-  //   for (let i = 1; i < items.length; i++) {
-  //     items[i].style.opacity = 1;
-  //     items[i].style.display = "block";
-  //   }
-  //   if (isItemCollected) {
-  //     // Reset collection state of all items
-  //     for (let i = 1; i < items.length; i++) {
-  //       isItemCollected[i] = false;
-  //     }
-  //   }
-  // });
-
-  // Add Items screen
-
-  //console.log(itemDivs);
-
-  // Store the drag and drop handlers so they can be removed later
-
   
   refreshBtn.addEventListener("click", () => {
       inEdit = !inEdit;
       //console.log("In Edit Mode:", inEdit);
       playSound(clickSound);
       const itemsLeftNumber = document.getElementById("itemsLeftNumber");
-      const wordsContainer = document.getElementById("words-container");
-      const alphabetContainer = document.getElementById("alphabet-container");
 
-      // --- Remove existing event listeners before clearing content ---
-      // if (wordsContainer) {
-      //     if (currentDragOverHandler) {
-      //         wordsContainer.removeEventListener("dragover", currentDragOverHandler);
-      //     }
-      //     if (currentDropHandler) {
-      //         wordsContainer.removeEventListener("drop", currentDropHandler);
-      //     }
-      // }
-      // ----------------------------------------------------------------
-
-      // Clear existing DOM elements
-      // wordsContainer.innerHTML = "";
-      // alphabetContainer.innerHTML = "";
-
-      // Reset arrays and state
-      // items.length = 0;
-      // itemDivs.length = 0;
-      // isItemCollected.length = 0;
-      // resizeBoxes.length = 0;
-      // lettercounter = 0;
       gameWon = false;
-
-      // Reinitialize tooltip button
-      // items.push(document.getElementById("btn"));
-      // itemDivs.push(document.getElementById("btnDiv"));
-      // isItemCollected.push(false);
-
-      // // Generate new random word items
-      // wordindexs = generateRandomWordItems(items, itemDivs, isItemCollected, worditemcounter);
-
-      // // Generate alphabet items
-      //generateAlphabetItems(items, itemDivs, isItemCollected);
-
-      // Arrange word items
-      //arrangeWordItems();
       
       // Create blanks and update remaining items
       const blanksData = createBlanksInWords();
@@ -2385,7 +1790,6 @@ if (snapshot !== "true" && snapshot !== true) {
       // Reinitialize drag-and-drop and store the new handlers
       setupDragAndDrop(items, blanksData);
 
-    
       // Reset UI elements
       btn.style.display = itemsLeftNumber.style.display = itemsLeft.style.display = "block";
   });
@@ -2522,95 +1926,6 @@ if (snapshot !== "true" && snapshot !== true) {
    resizeBoxes[i].addEventListener("mousedown", (e) => handleResizeStart(e, { i: parseInt(i / 4), direction: i % 4 === 0 ? "TL" : i % 4 === 1 ? "TR" : i % 4 === 2 ? "BL" : "BR", isResizing, lastScales, allowItemResize, resizeLastX, item: items[parseInt(i / 4)], itemDiv: itemDivs[parseInt(i / 4)], lastDirection, resizeScale }));
   }
 
-//   for (let i = 0; i < resizeBoxes.length; i++) {
-//     resizeBoxes[i].addEventListener("mousedown", () => console.log(`Clicked resizeBox${i}`));
-//     resizeBoxes[i].addEventListener("mousedown", (e) => customHandleResizeStart(e, { 
-//       i: parseInt(i / 4), 
-//       direction: i % 4 === 0 ? "TL" : i % 4 === 1 ? "TR" : i % 4 === 2 ? "BL" : "BR", 
-//       isResizing, 
-//       lastScales, 
-//       allowItemResize, 
-//       resizeLastX, 
-//       item: items[parseInt(i / 4)], 
-//       itemDiv: itemDivs[parseInt(i / 4)], 
-//       lastDirection, 
-//       resizeScale 
-//     }));
-//  }
-
-// for (let i = 0; i < resizeBoxes.length; i++) {
-//   // Skip if resizeBoxes[i] is null or undefined
-//   if (!resizeBoxes[i]) {
-//     console.error(`resizeBoxes[${i}] is null or undefined`);
-//     continue;
-//   }
-
-//   // Log to confirm event listener attachment
-//   console.log(`Attaching mousedown listener to resizeBox${i}, ID: ${resizeBoxes[i].id}`);
-
-//   // Determine itemIndex and direction based on resizeBoxes index
-//   let itemIndex;
-//   let direction;
-
-//   if (i < 4) {
-//     // Button: resizeBoxes[0–3] → itemsDiv[0] (btnDiv)
-//     itemIndex = 0;
-//     direction = i === 0 ? "TL" : i === 1 ? "TR" : i === 2 ? "BL" : "BR";
-//   } else if (i < 104) {
-//     // Alphabet items: resizeBoxes[4–103] → itemsDiv[5–30] (alphabetcontainerdivItem1–26)
-//     const alphabetIndex = Math.floor((i - 4) / 4) + 1; // 1 to 26
-//     itemIndex = 4 + alphabetIndex; // Maps to itemsDiv[5] to itemsDiv[30]
-//     direction = (i - 4) % 4 === 0 ? "TL" : (i - 4) % 4 === 1 ? "TR" : (i - 4) % 4 === 2 ? "BL" : "BR";
-//   } else {
-//     // Word items: resizeBoxes[104–119] → itemsDiv[1–4] (wordscontainerdivItem1–4)
-//     // Due to duplicate IDs, these may be incorrect, so we'll try to map them
-//     const wordIndex = Math.floor((i - 104) / 4) + 1; // 1 to 4
-//     itemIndex = wordIndex; // Maps to itemsDiv[1] to itemsDiv[4]
-//     direction = (i - 104) % 4 === 0 ? "TL" : (i - 104) % 4 === 1 ? "TR" : (i - 104) % 4 === 2 ? "BL" : "BR";
-
-//     // Log warning for potential duplicate ID issue
-//     console.warn(`resizeBox${i} (ID: ${resizeBoxes[i].id}) may be incorrect for word item ${wordIndex} due to duplicate IDs`);
-//   }
-
-//   // Log to verify mapping
-//   console.log(`resizeBox${i} mapped to itemIndex: ${itemIndex}, direction: ${direction}, item: ${items[itemIndex]?.id || "undefined"}`);
-
-//   // Skip if item or itemDiv is invalid
-//   if (!items[itemIndex] || !itemDivs[itemIndex]) {
-//     console.error(`Invalid item or itemDiv for resizeBox${i}, itemIndex: ${itemIndex}`);
-//     continue;
-//   }
-
-//   resizeBoxes[i].addEventListener("mousedown", () => console.log(`Clicked resizeBox${i}`));
-//   resizeBoxes[i].addEventListener("mousedown", (e) => {
-//     // Log parameters passed to handleResizeStart
-//     console.log(`mousedown on resizeBox${i}, itemIndex: ${itemIndex}, item: ${items[itemIndex]?.id || "undefined"}, itemDiv: ${itemDivs[itemIndex]?.id || "undefined"}`);
-
-//     handleResizeStart(e, {
-//       i: itemIndex,
-//       direction,
-//       isResizing,
-//       lastScales,
-//       allowItemResize,
-//       resizeLastX,
-//       item: items[itemIndex],
-//       itemDiv: itemDivs[itemIndex],
-//       lastDirection,
-//       resizeScale
-//     });
-//   });
-// }
-
-  // Context Menu
-  // for (let i = 1; i < items.length; i++) {
-  //   items[i].addEventListener("contextmenu", (e) => {
-  //     currentItemCM = i;
-  //     handleItemContextMenu(e, { isEditing, contextMenu, changeImageBtn });
-  //   });
-  // }
-
-  // changeImageInput.addEventListener("change", (e) => handleChangeImageUpload(e, items[currentItemCM]));
-
   // Context Menu
   for (let i = 1; i < items.length; i++) {
     if (items[i]?.id.startsWith("wordscontaineritem")) {
@@ -2634,8 +1949,6 @@ if (snapshot !== "true" && snapshot !== true) {
       wordindexs
     });
   });
-
-  //changeImageInput.addEventListener("change", (e) => handleChangeImageUpload(e, items[currentItemCM]));
 
   // Context Menu Options
   document.getElementById("changeWord").addEventListener("click", () => {
