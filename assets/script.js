@@ -666,14 +666,14 @@ function toggleButtonState(inputId, buttonId) {
 //  GENERAL  //
 // --------- //
 const gameDictionary = [
-  { text: "apple", imagePath: "./assets/apple.webp" },
-  { text: "juice", imagePath: "./assets/juice.webp" },
-  { text: "bread", imagePath: "./assets/bread.webp" },
-  { text: "cat", imagePath: "./assets/cat.webp" },
-  { text: "icecream", imagePath: "./assets/icecream.webp" },
-  { text: "pizza", imagePath: "./assets/pizza.webp" },
-  { text: "lollipop", imagePath: "./assets/lollipop.webp" },
-  { text: "noodle", imagePath: "./assets/noodle.webp" },
+  { text: "apple", imagePath: "./assets/words_images/apple.png" },
+  { text: "juice", imagePath: "./assets/words_images/juice.png" },
+  { text: "bread", imagePath: "./assets/words_images/bread.png" },
+  { text: "cat", imagePath: "./assets/words_images/cat.png" },
+  { text: "icecream", imagePath: "./assets/words_images/icecream.png" },
+  { text: "pizza", imagePath: "./assets/words_images/pizza.png" },
+  { text: "lollipop", imagePath: "./assets/words_images/lollipop.png" },
+  { text: "noodle", imagePath: "./assets/words_images/noodle.png" },
 ];
 
 const letterlist = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
@@ -880,7 +880,7 @@ if (snapshot !== "true" && snapshot !== true) {
   playableAudios.push(winSound);
   playableAudios.push(deleteSound);
 
-  for (let i = 1; i <= playableAudios.length; i++) {
+  for (let i = 1; i <= 4; i++) {
     audioInputs.push(document.getElementById(`audioInput${i}`));
     audioElements.push(document.getElementById(`audioElement${i}`));
   }
@@ -997,7 +997,7 @@ if (snapshot !== "true" && snapshot !== true) {
   });
 
   // Audio Upload
-  for (let i = 0; i < audioInputs.length; i++) {
+  for (let i = 0; i < 4; i++) {
     audioInputs[i].addEventListener("change", (e) => {
       sendPM();
       handleAudioUpload(e, { audioElement: audioElements[i], playableAudio: playableAudios[i] });

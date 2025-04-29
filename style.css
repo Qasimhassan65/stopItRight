@@ -120,6 +120,19 @@ canvas {
   background: linear-gradient(to bottom left, #12766e, #124e4a); /* Hover Effect */
 }
 
+
+/* Enabled state for the button */
+.save-button.enabled {
+  cursor: pointer;
+  background: linear-gradient(to right, #1abc9c, #16a085); /* Brighter gradient */
+  opacity: 1;
+}
+
+/* Hover effect for enabled state */
+.save-button.enabled:hover {
+  background: linear-gradient(to bottom left, #1abc9c, #16a085); /* Brighter hover */
+}
+
 .custom-whiteAndOff-button {
   cursor: pointer;
   /* background: linear-gradient(to right, #a19ad3, #5d3f6a); */

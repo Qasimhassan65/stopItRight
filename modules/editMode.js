@@ -5,14 +5,18 @@ import { playSound, hideScreen, showScreen } from "./utils.js";
 // ----------- //
 export const handleEditModeButtonClick = (params) => {
   playSound(params.clickSound);
-
+ 
   // Disable Editing Mode
   if (params.isEditing.value) {
     params.isEditing.value = false;
 
     // Show refresh button
+    // if (params.refreshBtn) {
+    //   params.refreshBtn.style.display = "block";
+    // }
+
     if (params.refreshBtn) {
-      params.refreshBtn.style.display = "block";
+      params.refreshBtn.style.display = "none";
     }
 
     // Hide the bin tooltip
@@ -22,8 +26,8 @@ export const handleEditModeButtonClick = (params) => {
     }
 
     // Make the title & the description non-editable
-    title.contentEditable = false;
-    description.contentEditable = false;
+    // title.contentEditable = false;
+    // description.contentEditable = false;
 
     title.style.border = description.style.border = "2px solid transparent";
 
@@ -69,8 +73,13 @@ export const handleEditModeButtonClick = (params) => {
     params.isEditing.value = true;
 
     // Hide refresh button
+    // if (params.refreshBtn) {
+    //   params.refreshBtn.style.display = "none";
+    // }
+
+    // Show refresh button
     if (params.refreshBtn) {
-      params.refreshBtn.style.display = "none";
+      params.refreshBtn.style.display = "block";
     }
 
     // Show the bin tooltip

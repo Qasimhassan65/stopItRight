@@ -33,8 +33,8 @@ export const handleButtonClick = (params) => {
 };
 
 export const handleTitleInput = () => {
-  if (title.textContent.length > 19) {
-    title.textContent = title.textContent.slice(0, 19);
+  if (title.textContent.length > 50) {
+    title.textContent = title.textContent.slice(0, 50);
   }
 };
 
