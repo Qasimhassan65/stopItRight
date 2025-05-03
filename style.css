@@ -468,7 +468,7 @@ div {
 }
 
 /* Styling for the helipad */
-#helipad {
+#helipaddiv {
 
   width: 40%; /* Width of the helipad image */
   height: 40%; /* Height of the helipad image, including the vertical line */
@@ -484,7 +484,7 @@ div {
 }
 
 /* Styling for the spaceship */
-#spaceship {
+#spaceshipdiv {
   position: absolute;
   width: 150px; /* Width of the spaceship */
   height: 150px; /* Height of the spaceship */
@@ -498,7 +498,80 @@ div {
   object-fit: contain; /* Ensures the image scales properly */
 }
 
+/* Speed Control Container */
+.speed-control-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto; /* Centered layout */
+  width: fit-content;
+  padding: 20px;
+  border: 1px solid #feb781;
+  border-radius: 12px;
+  background: linear-gradient(to right, #ff9900, #ffcc66);
+  box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);
+}
 
+/* Speed Label */
+.speed-label {
+  font-family: "Comfortaa", cursive;
+  font-size: 20px;
+  color: #ffffff;
+  margin-right: 10px; /* Matches your inline style */
+}
+
+/* Speed Input */
+.speed-input {
+  margin: 0 10px; /* Matches your inline style */
+  padding: 10px 20px;
+  border-radius: 10px;
+  border: 2px solid #feb781;
+  font-size: 20px;
+  font-family: "Comfortaa", cursive;
+  text-align: center;
+  width: 60px; /* Matches your inline style */
+  background-color: #fff3e0;
+  box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.1);
+  appearance: textfield; /* Ensures no default number input arrows */
+  -moz-appearance: textfield; /* Firefox */
+}
+
+/* Optional hover/focus styles for input */
+.speed-input:focus {
+  outline: none;
+  border-color: #ffa94d;
+  background-color: #fff8ec;
+}
+
+.speed-input:hover {
+  background-color: #fff8ec;
+  border-color: #ffa94d;
+}
+
+/* Increase/Decrease Buttons */
+#increaseSpeedBtn,
+#decreaseSpeedBtn {
+  width: 40px; /* Matches your inline style */
+  height: 40px; /* Matches your inline style */
+  font-size: 20px; /* Matches your inline style */
+  border: none;
+  border-radius: 50%; /* Circular buttons */
+  background: linear-gradient(to right, #1a1d64, #20267d);
+  color: #f6f6f6;
+  cursor: pointer;
+  transition: background 0.3s, transform 0.1s;
+}
+
+#increaseSpeedBtn:hover,
+#decreaseSpeedBtn:hover {
+  background: linear-gradient(to right, #5b5da8, #20267d);
+  transform: scale(1.1); /* Slight scale on hover for interactivity */
+}
+
+#increaseSpeedBtn:active,
+#decreaseSpeedBtn:active {
+  transform: scale(0.95); /* Slight scale on click for feedback */
+}
 
 
 @keyframes fadeOut {

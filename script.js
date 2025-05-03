@@ -10,14 +10,13 @@ import { playSound, hideScreen, handleDownScaling, handleUpScaling, handleElemen
 // ------------------ //
 //  HELPER FUNCTIONS  //
 // ------------------ //
-const spaceship = document.getElementById('spaceship');
+const spaceship = document.getElementById('spaceshipdiv');
 const spaceshipImg = spaceship.querySelector('img'); // Select the img element inside the spaceship div
 const gameContainer = document.querySelector('.game-container');
-const helipad = document.getElementById('helipad');
+const helipad = document.getElementById('helipaddiv');
 
 // Initial position and speed
 let positionX = 0; // Starting position from your HTML
-let positionY = 0;
 const speed = 7.5; // Speed of the spaceship (adjust as needed)
 let direction = 1; // 1 for right, -1 for left
 let stopspaceship = false;
@@ -25,8 +24,6 @@ let stopspaceship = false;
 // Get the boundaries of the game container
 const containerWidth = gameContainer.clientWidth;
 const spaceshipWidth = spaceship.clientWidth;
-const helipadWidth = helipad.clientWidth;
-const helipadX = helipad.getBoundingClientRect().left;
 
 // Set initial image (moving right)
 spaceshipImg.src = './assets/spaceship_right.webp';
@@ -34,7 +31,7 @@ spaceshipImg.src = './assets/spaceship_right.webp';
 // Animation loop to move the spaceship
 function moveSpaceship() {
 
-  if(!stopspaceship)
+  if(!stopspaceship && !isEditing.value)
   {    
     // Update position
     positionX += speed * direction;
@@ -62,24 +59,39 @@ function moveSpaceship() {
 }
 
 function handleClick() {
-  stopspaceship = true; // Toggle to stop the spaceship
+  if(!isEditing.value)
+  {
+  stopspaceship = true;
 
-  // Get the spaceship's current position
-  const spaceshipX = positionX + (spaceshipWidth / 2); // Center of the spaceship
-  const helipadCenterX = helipadX + (helipadWidth / 2) + 100; // Center of the helipad
-  const range = 50; // Acceptable range for a successful landing (adjust as needed)
+  // Get bounding rectangles for both spaceship and helipad
+  const spaceshipRect = spaceship.getBoundingClientRect();
+  const helipadRect = helipad.getBoundingClientRect();
 
-  // Check if spaceship is within range of helipad center
-  if (Math.abs(spaceshipX - helipadCenterX) <= range) {
-      console.log('win');
-      document.addEventListener('keydown', handleRestart);
-      playSound(winSound);
+  // Get center positions
+  const spaceshipCenterX = spaceshipRect.left + (spaceshipRect.width / 2);
+  const spaceshipCenterY = spaceshipRect.top + (spaceshipRect.height / 2);
+
+  const helipadCenterX = helipadRect.left + (helipadRect.width / 2);
+  const helipadCenterY = helipadRect.top + (helipadRect.height / 2);
+
+  const xRange = 80;
+  const yRange = 40;
+
+  const withinX = Math.abs(spaceshipCenterX - helipadCenterX) <= xRange;
+  const withinY = Math.abs(spaceshipCenterY - helipadCenterY) <= yRange;
+
+  if (withinX && withinY) {
+    console.log('win');
+    playSound(winSound);
   } else {
-      console.log('Missed! Press R to restart.');
-      document.addEventListener('keydown', handleRestart);
-      playSound(wrongSound);
+    console.log('Missed! Press R to restart.');
+    playSound(wrongSound);
   }
+
+  document.addEventListener('keydown', handleRestart);
 }
+}
+
 
 // Function to handle restart
 function handleRestart(event) {
@@ -237,29 +249,6 @@ const setupDragAndDrop = (blanksData) => {
   currentDropHandler = dropHandler;
 };
 
-const addDragListenersToAllItems = (itemDivs, params) => {
-  itemDivs.forEach((div, index) => {
-    const dragType = div.id.includes("btnDiv") ? "button" : "item";
-    const dragParams = { i: index, targetDiv: div, isDragging: params.isDragging, isResizing: params.isResizing, gameWon, savedX: params.savedX, savedY: params.savedY, allowItemMove: params.allowItemMove, teleporationFix: params.teleporationFix, deltaX: params.deltaX, deltaY: params.deltaY, isEditing: params.isEditing, type: dragType, subType: "text", placeBack: true, btnLastX: params.btnLastX, btnLastY: params.btnLastY };
-
-    div.addEventListener("mousedown", (e) => {
-      if (params.isTooltipOpen.value || !params.isEditing.value) return;
-
-      globalZIndex++;
-      div.style.zIndex = globalZIndex;
-
-      handleDragStart(e, dragParams);
-    });
-
-    div.addEventListener("mouseup", (e) => {
-      if (params.isTooltipOpen.value || !params.isEditing.value) return;
-      handleDragEnd(e, dragParams);
-    });
-
-    div.addEventListener("click", () => handleElementClick({ currSelectedElement, element: div, isEditing: params.isEditing, isTooltipOpen: params.isTooltipOpen }));
-  });
-};
-
 // ---------------- //
 //  SHOW FEEDBACK   //
 // ---------------- //
@@ -274,156 +263,6 @@ function showFeedback(isCorrect) {
   setTimeout(() => feedback.remove(), 2000);
 }
 
-// ---------------- //
-//  ITEMS ADDITION  //
-// ---------------- //
-const addWordItemOnScreen = (params) => {
-  return new Promise((resolve) => {
-    gameDictionary.push({ text: params.wordName, imagePath: params.addableImg.src });
-    wordindexs.push(gameDictionary.length - 1);
-
-    const latestItem = params.items.length;
-    params.isAddingItems.value = false;
-    hideScreen(params.itemsAdditionScreen);
-
-    const div = document.createElement("div");
-    div.id = `wordscontainerdivItem${latestItem}`;
-    div.style.cssText = "position:absolute;left:100px;top:100px;display:inline-block;z-index:99999999;";
-
-    const wordItemDiv = document.createElement("div");
-    wordItemDiv.id = `wordscontaineritem${latestItem}`;
-    wordItemDiv.className = "word-item";
-
-    const img = document.createElement("img");
-    img.id = `worditem${latestItem}Image`;
-    img.src = params.addableImg.src;
-
-    const wordText = document.createElement("span");
-    wordText.id = `worditem${latestItem}Text`;
-    wordText.innerText = params.wordName;
-
-    wordItemDiv.append(img, wordText);
-    div.appendChild(wordItemDiv);
-
-    const resizeStyle = "position:absolute;width:14px;height:14px;visibility:hidden;border-radius:100%;background:white;border:1px solid red;";
-
-    ["TL", "TR", "BL", "BR"].forEach((id, i) => {
-      const resizeBox = document.createElement("div");
-      resizeBox.id = `resizeBox${latestItem}${id}`;
-      resizeBox.style.cssText = `${resizeStyle}${["left:-6px;top:-6px;cursor:nwse-resize;", "right:-6px;top:-6px;cursor:nesw-resize;", "left:-6px;bottom:-6px;cursor:nesw-resize;", "right:-6px;bottom:-6px;cursor:nwse-resize;"][i]}`;
-
-      div.appendChild(resizeBox);
-      params.resizeBoxes.push(resizeBox);
-    });
-
-    const wordContainer = document.getElementById("words-container");
-    if (!wordContainer) return resolve();
-
-    wordContainer.appendChild(div);
-    params.items.push(wordItemDiv);
-    params.itemDivs.push(div);
-    params.isItemCollected.push(false);
-
-    const dragParams = { i: latestItem, targetDiv: div, isDragging: params.isDragging, isResizing: params.isResizing, gameWon, savedX: params.savedX, savedY: params.savedY, allowItemMove: params.allowItemMove, teleporationFix: params.teleporationFix, deltaX: params.deltaX, deltaY: params.deltaY, isEditing: params.isEditing, type: "item", placeBack: true, btnLastX: params.btnLastX, btnLastY: params.btnLastY };
-
-    div.addEventListener("mousedown", (e) => {
-      if (params.isTooltipOpen.value || !params.isEditing.value) return;
-      handleDragStart(e, dragParams);
-    });
-
-    div.addEventListener("mouseup", (e) => {
-      if (params.isTooltipOpen.value || !params.isEditing.value) return;
-      handleDragEnd(e, dragParams);
-    });
-
-    div.addEventListener("click", () => handleElementClick({ currSelectedElement, element: div, isEditing: params.isEditing, isTooltipOpen: params.isTooltipOpen }));
-    resolve();
-  });
-};
-
-const addLetterItemOnScreen = (params) => {
-  return new Promise((resolve) => {
-    const letter = params.letterName.toUpperCase();
-    if (!letterlist.includes(letter)) letterlist.push(letter);
-
-    const latestItem = lettercounter + 1;
-    lettercounter++;
-    params.isAddingItems.value = false;
-    hideScreen(params.itemsAdditionScreen);
-
-    const alphabetContainer = document.getElementById("alphabet-container");
-    if (!alphabetContainer) return resolve();
-
-    const div = document.createElement("div");
-    div.id = `alphabetcontainerdivItem${latestItem}`;
-    div.style.cssText = "position:absolute;left:60px;top:200px;display:inline-block;";
-
-    const resizeStyle = "position:absolute;width:14px;height:14px;visibility:hidden;border-radius:100%;background:white;border:1px solid red;z-index:99999999;";
-
-    ["TL", "TR", "BL", "BR"].forEach((id, i) => {
-      const resizeBox = document.createElement("div");
-      resizeBox.id = `resizeBox${latestItem}${id}`;
-      resizeBox.style.cssText = `${resizeStyle}${["left:-6px;top:-6px;cursor:nwse-resize;", "right:-6px;top:-6px;cursor:nesw-resize;", "left:-6px;bottom:-6px;cursor:nesw-resize;", "right:-6px;bottom:-6px;cursor:nwse-resize;"][i]}`;
-      div.appendChild(resizeBox);
-      params.resizeBoxes.push(resizeBox);
-    });
-
-    const letterItem = document.createElement("div");
-    letterItem.id = `alphabetcontaineritem${latestItem}`;
-    letterItem.className = "letter";
-    letterItem.draggable = true;
-
-    const letterText = document.createElement("span");
-    letterText.id = `alphabetitem${latestItem}Text`;
-    letterText.textContent = letter;
-    letterText.style.fontFamily = "'Comfortaa'";
-
-    letterItem.appendChild(letterText);
-    div.appendChild(letterItem);
-    alphabetContainer.appendChild(div);
-
-    params.items.push(letterItem);
-    params.itemDivs.push(div);
-    params.isItemCollected.push(false);
-
-    const dragParams = { i: latestItem, targetDiv: div, isDragging: params.isDragging, isResizing: params.isResizing, gameWon, savedX: params.savedX, savedY: params.savedY, allowItemMove: params.allowItemMove, teleporationFix: params.teleporationFix, deltaX: params.deltaX, deltaY: params.deltaY, isEditing: params.isEditing, type: "item", placeBack: true, btnLastX: params.btnLastX, btnLastY: params.btnLastY };
-
-    div.addEventListener("mousedown", (e) => {
-      if (params.isTooltipOpen.value || !params.isEditing.value) return;
-      handleDragStart(e, dragParams);
-    });
-
-    div.addEventListener("mouseup", (e) => {
-      if (params.isTooltipOpen.value || !params.isEditing.value) return;
-      handleDragEnd(e, dragParams);
-    });
-
-    div.addEventListener("click", () => handleElementClick({ currSelectedElement, element: div, isEditing: params.isEditing, isTooltipOpen: params.isTooltipOpen }));
-
-    letterItem.addEventListener("dragstart", (e) => {
-      if (params.isEditing?.value || gameWon) return;
-      e.dataTransfer.setData("text/plain", letter);
-      letterItem.classList.add("dragging");
-    });
-
-    letterItem.addEventListener("dragend", (e) => letterItem.classList.remove("dragging"));
-
-    resolve();
-  });
-};
-
-function clearBlanks() {
-  document.querySelectorAll('[id^="worditem"][id$="Text"]').forEach((wordSpan) => {
-    const wordContainer = wordSpan.closest('[id^="wordscontainerdivItem"]');
-    if (!wordContainer || wordContainer.style.display === "none") return;
-
-    const index = parseInt(wordSpan.id.match(/worditem(\d+)Text/)?.[1], 10) - 1;
-    if (isNaN(index)) return;
-
-    const dictIndex = wordindexs[index] ?? index % gameDictionary.length;
-    wordSpan.textContent = gameDictionary[dictIndex]?.text || "Unknown";
-  });
-}
 
 // ---------------- //
 //  ITEMS DELETION  //
@@ -643,8 +482,8 @@ let currentDragOverHandler = null;
 let currentDropHandler = null;
 
 // Elements
-let items = [document.getElementById("btn")];
-let itemDivs = [document.getElementById("btnDiv")];
+let items = [document.getElementById("btn"), document.getElementById("spaceship") , document.getElementById("helipad")];
+let itemDivs = [document.getElementById("btnDiv"), spaceship , helipad];
 let resizeBoxes = [];
 let isItemCollected = [];
 let remainingItems = 4;
@@ -780,36 +619,18 @@ if (snapshot !== "true" && snapshot !== true) {
   
 
   // Resize Boxes
-  // for (let i = 0; i < items.length; i++) {
-  //   const tl = document.getElementById(`resizeBox${i}TL`);
-  //   const tr = document.getElementById(`resizeBox${i}TR`);
-  //   const bl = document.getElementById(`resizeBox${i}BL`);
-  //   const br = document.getElementById(`resizeBox${i}BR`);
+  for (let i = 0; i < items.length; i++) {
+    const tl = document.getElementById(`resizeBox${i}TL`);
+    const tr = document.getElementById(`resizeBox${i}TR`);
+    const bl = document.getElementById(`resizeBox${i}BL`);
+    const br = document.getElementById(`resizeBox${i}BR`);
 
-  //   if (tl && tr && bl && br) resizeBoxes.push(tl, tr, bl, br);
-  //   else console.error(`Missing resize boxes for item ${i}:`, { tl, tr, bl, br });
-  // }
+    if (tl && tr && bl && br) resizeBoxes.push(tl, tr, bl, br);
+    else console.error(`Missing resize boxes for item ${i}:`, { tl, tr, bl, br });
+  }
 
-  // Items Addition
-  addableImgInput.addEventListener("change", (e) => handleImageUpload(e, { targetImg: addableImg }));
-  const baseParams = { items, itemDivs, isAddingItems, itemsAdditionScreen, isItemCollected, resizeBoxes, isDragging, isResizing, savedX, savedY, allowItemMove, teleporationFix, deltaX, deltaY, isEditing, isTooltipOpen, btnLastX, btnLastY };
+  
 
-  // Add event listeneers for adding item
-  const addItem = (inputId, isWord, addFn) => {
-    const name = document.getElementById(inputId).value;
-    if (!name) return;
-
-    addFn({ ...baseParams, [isWord ? "wordName" : "letterName"]: name, ...(isWord && { addableImg }) }).then(() => {
-      if (isWord) {
-        setupDragAndDrop(blanksData);
-        remainingItems = document.querySelectorAll('[id^="worditem"][id$="Text"]').length;
-        itemsLeftNumber.innerHTML = remainingItems;
-      }
-    });
-  };
-
-  toggleButtonState("wordInput", "addItemBtn");
-  toggleButtonState("letterInput", "addLetterBtn");
 
   // Add event listeners for adding items
   addItemBtn.addEventListener("click", () => addItem("wordInput", true, addWordItemOnScreen));
@@ -817,14 +638,18 @@ if (snapshot !== "true" && snapshot !== true) {
   
 
   // Audios
+  
+  playableAudios.push(clickSound);
   playableAudios.push(winSound);
   playableAudios.push(wrongSound);
-  playableAudios.push(clickSound);
 
   for (let i = 1; i <= playableAudios.length; i++) {
     audioInputs.push(document.getElementById(`audioInput${i}`));
     audioElements.push(document.getElementById(`audioElement${i}`));
   }
+
+  console.log(items);
+  console.log(itemDivs);
 
   for (let i = 0; i < itemDivs.length; i++) {
     itemDivs[i].addEventListener("mousedown", (e) => {
@@ -858,30 +683,29 @@ if (snapshot !== "true" && snapshot !== true) {
   editModeBtn.addEventListener("click", () => {
     const wasEditing = isEditing.value;
     inEdit = !inEdit;
+    stopspaceship = false; 
     handleEditModeButtonClick(editModeParams);
 
     if (!wasEditing && isEditing.value) {
-      clearBlanks();
       remainingItems = 0;
       itemsLeftNumber.innerHTML = remainingItems;
 
       [btnDiv, btn, itemsLeft, itemsLeftNumber].forEach((el) => (el.style.display = "block"));
       [settingsScreen, itemsAdditionScreen].forEach(hideScreen);
 
-      addDragListenersToAllItems(itemDivs, dragParams);
+      //addDragListenersToAllItems(itemDivs, dragParams);
+    }
+    else{
+     isEditing.value = false;
     }
   });
 
   refreshBtn.addEventListener("click", () => {
     gameWon = false;
-    inEdit = !inEdit;
     playSound(clickSound);
-
-    const blanksData = createBlanksInWords(); // Create blanks and update remaining items
-    remainingItems = blanksData.reduce((sum, data) => sum + data.blankPositions.length, 0);
-
-    document.getElementById("itemsLeftNumber").innerHTML = remainingItems;
-    setupDragAndDrop(blanksData); // Reinitialize drag-and-drop and store the new handlers
+    stopspaceship = false;
+    isEditing.value = false;
+    moveSpaceship();
   });
 
   addItemsBtn.addEventListener("click", () => handleAddItemsButtonClick({ isAddingItems, itemsAdditionScreen, cleanUp: false, clickSound, settingsScreen, saveScreen }));

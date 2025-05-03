@@ -11,13 +11,13 @@ export const handleEditModeButtonClick = (params) => {
     params.isEditing.value = false;
 
     // Show refresh button
-    // if (params.refreshBtn) {
-    //   params.refreshBtn.style.display = "block";
-    // }
-
     if (params.refreshBtn) {
-      params.refreshBtn.style.display = "none";
+      params.refreshBtn.style.display = "block";
     }
+
+    // if (params.refreshBtn) {
+    //   params.refreshBtn.style.display = "none";
+    // }
 
     // Hide the bin tooltip
     if (params.btnClicks !== null && params.btnClicks !== undefined) {
@@ -73,14 +73,14 @@ export const handleEditModeButtonClick = (params) => {
     params.isEditing.value = true;
 
     // Hide refresh button
-    // if (params.refreshBtn) {
-    //   params.refreshBtn.style.display = "none";
-    // }
+    if (params.refreshBtn) {
+      params.refreshBtn.style.display = "none";
+    }
 
     // Show refresh button
-    if (params.refreshBtn) {
-      params.refreshBtn.style.display = "block";
-    }
+    // if (params.refreshBtn) {
+    //   params.refreshBtn.style.display = "block";
+    // }
 
     // Show the bin tooltip
     if (params.btnClicks !== null && params.btnClicks !== undefined && params.btnClicks.value < 2) {
