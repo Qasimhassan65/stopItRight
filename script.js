@@ -10,136 +10,90 @@ import { playSound, hideScreen, handleDownScaling, handleUpScaling, handleElemen
 // ------------------ //
 //  HELPER FUNCTIONS  //
 // ------------------ //
-function generateRandomWordItems(items, itemDivs, isItemCollected, wordItemCount) {
-  const selectedIndices = [];
-  const maxItems = Math.min(wordItemCount, gameDictionary.length);
+const spaceship = document.getElementById('spaceship');
+const spaceshipImg = spaceship.querySelector('img'); // Select the img element inside the spaceship div
+const gameContainer = document.querySelector('.game-container');
+const helipad = document.getElementById('helipad');
 
-  const wordsContainer = document.getElementById("words-container");
-  wordsContainer.innerHTML = "";
+// Initial position and speed
+let positionX = 0; // Starting position from your HTML
+let positionY = 0;
+const speed = 7.5; // Speed of the spaceship (adjust as needed)
+let direction = 1; // 1 for right, -1 for left
+let stopspaceship = false;
 
-  while (selectedIndices.length < maxItems) {
-    const randomIndex = Math.floor(Math.random() * gameDictionary.length);
-    if (!selectedIndices.includes(randomIndex)) selectedIndices.push(randomIndex);
-  }
+// Get the boundaries of the game container
+const containerWidth = gameContainer.clientWidth;
+const spaceshipWidth = spaceship.clientWidth;
+const helipadWidth = helipad.clientWidth;
+const helipadX = helipad.getBoundingClientRect().left;
 
-  selectedIndices.forEach((dictIndex, arrayIndex) => {
-    const item = gameDictionary[dictIndex];
-    const index = arrayIndex + 1;
-    const leftPos = (index - 1) % 4 === 0 ? 20 : 400;
-    const topPos = Math.floor((index - 1) / 4) * 200 + 20;
-    const resizeStyle = "position:absolute; width:14px; height:14px; visibility:hidden; border-radius:100%; background-color:white; border:1px solid red; z-index:4001;";
+// Set initial image (moving right)
+spaceshipImg.src = './assets/spaceship_right.webp';
 
-    const itemHtml = `
-      <div id="wordscontainerdivItem${index}" style="position:absolute;left:${leftPos}px;top:${topPos}px;display:inline-block">
-        <div id="resizeBox${index}TL" style="${resizeStyle}left:-6px;top:-6px;cursor:nwse-resize;"></div>
-        <div id="resizeBox${index}TR" style="${resizeStyle}right:-6px;top:-6px;cursor:nesw-resize;"></div>
-        <div id="resizeBox${index}BL" style="${resizeStyle}left:-6px;bottom:-6px;cursor:nesw-resize;"></div>
-        <div id="resizeBox${index}BR" style="${resizeStyle}right:-6px;bottom:-6px;cursor:nwse-resize;"></div>
-        <div id="wordscontaineritem${index}" class="word-item">
-          <img id="worditem${index}Image" src="${item.imagePath}"/>
-          <span id="worditem${index}Text">${item.text}</span>
-        </div>
-      </div>
-    `;
+// Animation loop to move the spaceship
+function moveSpaceship() {
 
-    wordsContainer.insertAdjacentHTML("beforeend", itemHtml);
+  if(!stopspaceship)
+  {    
+    // Update position
+    positionX += speed * direction;
 
-    items.push(document.getElementById(`wordscontaineritem${index}`));
-    itemDivs.push(document.getElementById(`wordscontainerdivItem${index}`));
-    isItemCollected.push(false);
-  });
+    // Check for collision with the right wall
+    if (positionX + spaceshipWidth >= containerWidth) {
+        positionX = containerWidth - spaceshipWidth; // Prevent overflow
+        direction = -1; // Reverse direction to move left
+        spaceshipImg.src = './assets/spaceship_left.webp'; // Change image to left-facing
+    }
 
-  return selectedIndices;
-}
+    // Check for collision with the left wall
+    if (positionX <= 0) {
+        positionX = 0; // Prevent overflow
+        direction = 1; // Reverse direction to move right
+        spaceshipImg.src = './assets/spaceship_right.webp'; // Change image to right-facing
+    }
 
-// -------------------- //
-//  Arrange Word Items  //
-// -------------------- //
-function arrangeWordItems() {
-  const { clientWidth: width } = document.getElementById("words-container");
-  const wordItemDivs = itemDivs.filter((div) => div.id.startsWith("wordscontainerdivItem") && div.style.display !== "none");
-  const columns = Math.floor(width / 250);
-  const rows = Math.ceil(wordItemDivs.length / columns);
-  const usedCells = new Set();
+    // Apply the new position to the spaceship
+    spaceship.style.left = positionX + 'px';
 
-  for (let i = 0; i < wordItemDivs.length; i++) {
-    let col, row, cellIndex;
-
-    do {
-      col = Math.floor(Math.random() * columns);
-      row = Math.floor(Math.random() * rows);
-      cellIndex = row * columns + col;
-    } while (usedCells.has(cellIndex));
-
-    usedCells.add(cellIndex);
-    wordItemDivs[i].style.cssText = `position:absolute;left:${col * 266}px;top:${row * 120}px;`;
+    // Continue the animation
+    requestAnimationFrame(moveSpaceship);
   }
 }
 
-// --------------------- //
-// ALPHABETS GENERATION  //
-// --------------------- //
-const generateAlphabetItems = (items, itemDivs, isItemCollected) => {
-  items = Array.isArray(items) ? items : [document.getElementById("btn")].filter(Boolean);
-  itemDivs = Array.isArray(itemDivs) ? itemDivs : [document.getElementById("btnDiv")].filter(Boolean);
-  isItemCollected = Array.isArray(isItemCollected) ? isItemCollected : [];
+function handleClick() {
+  stopspaceship = true; // Toggle to stop the spaceship
 
-  const alphabetContainer = document.getElementById("alphabet-container");
-  if (!alphabetContainer) return;
+  // Get the spaceship's current position
+  const spaceshipX = positionX + (spaceshipWidth / 2); // Center of the spaceship
+  const helipadCenterX = helipadX + (helipadWidth / 2) + 100; // Center of the helipad
+  const range = 50; // Acceptable range for a successful landing (adjust as needed)
 
-  alphabetContainer.innerHTML = "";
+  // Check if spaceship is within range of helipad center
+  if (Math.abs(spaceshipX - helipadCenterX) <= range) {
+      console.log('win');
+      document.addEventListener('keydown', handleRestart);
+      playSound(winSound);
+  } else {
+      console.log('Missed! Press R to restart.');
+      document.addEventListener('keydown', handleRestart);
+      playSound(wrongSound);
+  }
+}
 
-  const startX = 20,
-    startY = 20,
-    xSpacing = 80,
-    ySpacing = 80,
-    maxPerRow = 10,
-    lettersInLastRow = 6;
-
-  const leftOffset = (maxPerRow * xSpacing - ((lettersInLastRow - 1) * xSpacing + 56)) / 2;
-  const resizeStyle = "position:absolute;width:14px;height:14px;visibility:hidden;border-radius:100%;background:white;border:1px solid red;margin-left:30px;z-index:99999999;";
-
-  letterlist.forEach((letter, index) => {
-    const xPos = startX + (index % maxPerRow) * xSpacing + (index >= 20 ? leftOffset : 0);
-    const yPos = startY + Math.floor(index / maxPerRow) * ySpacing;
-
-    const itemDiv = document.createElement("div");
-    itemDiv.id = `alphabetcontainerdivItem${index + 1}`;
-    itemDiv.style.cssText = `position:absolute;left:${xPos}px;top:${yPos}px;display:inline-block;`;
-
-    ["TL", "TR", "BL", "BR"].forEach((id, i) => {
-      const resizeBox = document.createElement("div");
-      resizeBox.id = `resizeBox${wordindexs.length + index + 1}${id}`;
-      resizeBox.style.cssText = `${resizeStyle}${["left:-6px;top:-6px;cursor:nwse-resize;", "right:-6px;top:-6px;cursor:nesw-resize;", "left:-6px;bottom:-6px;cursor:nesw-resize;", "right:-6px;bottom:-6px;cursor:nwse-resize;"][i]}`;
-      itemDiv.appendChild(resizeBox);
-    });
-
-    const letterItem = document.createElement("span");
-    letterItem.id = `alphabetcontainer${index + 1}`;
-    letterItem.className = "letter";
-    letterItem.draggable = true;
-
-    const letterText = document.createElement("span");
-    letterText.id = `alphabetitem${index + 1}Text`;
-    letterText.textContent = letter;
-    letterText.style.fontFamily = "'Comfortaa'";
-
-    letterItem.appendChild(letterText);
-    itemDiv.appendChild(letterItem);
-    alphabetContainer.appendChild(itemDiv);
-
-    items.push(letterItem);
-    itemDivs.push(itemDiv);
-    isItemCollected.push(false);
-
-    letterItem.addEventListener("dragstart", (e) => {
-      e.dataTransfer.setData("text/plain", `lettercontainer${index + 1}`);
-      letterItem.classList.add("dragging");
-    });
-
-    letterItem.addEventListener("dragend", (e) => letterItem.classList.remove("dragging"));
-  });
-};
+// Function to handle restart
+function handleRestart(event) {
+  if (event.key === 'r' || event.key === 'R') {
+      stopspaceship = false; // Resume movement
+      positionX = 0; // Reset to initial position
+      direction = 1; // Reset direction to right
+      spaceshipImg.src = './assets/spaceship_right.webp'; // Reset image
+      spaceship.style.left = positionX + 'px'; // Reset position
+      console.log('Game restarted!');
+      document.removeEventListener('keydown', handleRestart); // Remove listener after restart
+      moveSpaceship();
+  }
+}
 
 // --------------- //
 //  CREATE BLANKS  //
@@ -790,11 +744,9 @@ let audioInputs = [];
 let audioElements = [];
 let playableAudios = [];
 
-const collectSound = document.getElementById("collectSound");
 const winSound = document.getElementById("winSound");
 const wrongSound = document.getElementById("wrongSound");
 const clickSound = document.getElementById("clickSound");
-const deleteSound = document.getElementById("deleteSound");
 
 // ----------- //
 //  SAVE GAME  //
@@ -822,31 +774,21 @@ if (snapshot !== "true" && snapshot !== true) {
   //  DOCUMENT ELEMENTS  //
   // ------------------- //
 
-  // Chosing Random words from the dictionary
-  wordindexs = generateRandomWordItems(items, itemDivs, isItemCollected, worditemcounter);
+  moveSpaceship();
+  gameContainer.addEventListener('click', handleClick);
 
-  // Arranging the items on the screen in Grid
-  arrangeWordItems();
-
-  // Generating the alphabet items
-  generateAlphabetItems(items, itemDivs, isItemCollected);
-
-  // Add blanks to words
-  const blanksData = createBlanksInWords();
-
-  // Setup drag-and-drop for letters
-  setupDragAndDrop(blanksData);
+  
 
   // Resize Boxes
-  for (let i = 0; i < items.length; i++) {
-    const tl = document.getElementById(`resizeBox${i}TL`);
-    const tr = document.getElementById(`resizeBox${i}TR`);
-    const bl = document.getElementById(`resizeBox${i}BL`);
-    const br = document.getElementById(`resizeBox${i}BR`);
+  // for (let i = 0; i < items.length; i++) {
+  //   const tl = document.getElementById(`resizeBox${i}TL`);
+  //   const tr = document.getElementById(`resizeBox${i}TR`);
+  //   const bl = document.getElementById(`resizeBox${i}BL`);
+  //   const br = document.getElementById(`resizeBox${i}BR`);
 
-    if (tl && tr && bl && br) resizeBoxes.push(tl, tr, bl, br);
-    else console.error(`Missing resize boxes for item ${i}:`, { tl, tr, bl, br });
-  }
+  //   if (tl && tr && bl && br) resizeBoxes.push(tl, tr, bl, br);
+  //   else console.error(`Missing resize boxes for item ${i}:`, { tl, tr, bl, br });
+  // }
 
   // Items Addition
   addableImgInput.addEventListener("change", (e) => handleImageUpload(e, { targetImg: addableImg }));
@@ -875,10 +817,9 @@ if (snapshot !== "true" && snapshot !== true) {
   
 
   // Audios
-  playableAudios.push(clickSound);
-  playableAudios.push(collectSound);
   playableAudios.push(winSound);
-  playableAudios.push(deleteSound);
+  playableAudios.push(wrongSound);
+  playableAudios.push(clickSound);
 
   for (let i = 1; i <= playableAudios.length; i++) {
     audioInputs.push(document.getElementById(`audioInput${i}`));

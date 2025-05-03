@@ -461,269 +461,45 @@ div {
   -webkit-user-drag: none; /* Disable dragging in Safari */
 }
 
-
-
 .game-container {
-  /* Keep other styles */
-  border-radius: 30px;
-  max-width: 960px;
-  min-height: 600px;
-  text-align: center;
-  position: relative;
-  z-index: 2;
-  margin: 0 auto;
-  box-sizing: border-box;
-  /* Clean up duplicate padding and width, set a sufficient padding-top */
-  padding: 20px; /* Keep a base padding */
-  padding-top: 80px; /* Increased padding-top to accommodate negative margin */
-  width: 100%; /* Use 100% width with max-width */
+  position: relative; /* Allows absolute positioning of children (helipad and spaceship) */
+  width: 100%; /* Full viewport width to match the background */
+  height: 100%; /* Full viewport height */
 }
 
-.game-container h1 {
-  /* background: rgba(255, 255, 255, 0.95); */
-  /* box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2); */
-  font-family: 'Chewy', cursive;
-  /* border: 3px dashed #03fbff; */
-  border-radius: 20px;
-  font-size: 3.5em;
-  letter-spacing: 1px;
-  color: #ff6b81;
-  margin-bottom: 50px; /* Keep your desired bottom margin */
-  width: 50%;
-  margin-left: 230px;
-  margin-top: 10px; 
-} 
+/* Styling for the helipad */
+#helipad {
 
- #words-container {
-  /* border: 3px dashed #ffb703;
-  background-color: #fffbe6; */
-  padding: 20px;
-  margin-top: 80px;
-  width: 100%;
-  min-height: 380px;
-  margin-left: 80px;
-  margin-bottom: 20px;
-  border-radius: 20px;
-  position: relative;
-  z-index: 1;
-  /* overflow: auto; */
-  box-sizing: border-box;
-}
-
-/* #words-container {
-  border: 3px dashed #ffb703;
-  background-color: #fffbe6;
-  padding: 20px;
-  width: 100%;
-  min-height: 380px;
-  margin-bottom: 20px;
-  border-radius: 20px;
-  position: relative;
-  z-index: 1;
-  overflow: auto;
-  box-sizing: border-box;
-}
-
-#words-container {
-  border: 3px dashed #ffb703;
-  background-color: #fffbe6;
-  padding: 20px;
-  width: 100%;
-  min-height: 380px;
-  margin-bottom: 20px;
-  border-radius: 20px;
-  position: relative;
-  z-index: 1;
-  overflow: auto;
-  box-sizing: border-box;
-}
-
-#words-container::-webkit-scrollbar {
-  width: 5px;
-  height: 5px;
-}
-
-#words-container::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-#words-container::-webkit-scrollbar-thumb {
-  background-color: #ff6b81;
-  border-radius: 10px;
-} */
-
-.word-item {
+  width: 40%; /* Width of the helipad image */
+  height: 40%; /* Height of the helipad image, including the vertical line */
   display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 12px 26px;
-  background-color: #fcefee;
-  border-radius: 15px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  width: fit-content;
-  position: relative;
+  justify-content: center; 
 }
 
-.word-item span{
-  font-family: 'Comfortaa';
-  font-weight: bold;
-  font-size: 1.8em;
-}
-
-.word-item img {
-  max-width: 60px;
-  border-radius: 8px;
-  height: auto;
-}
-
-
-.blank,
-.filled {
-  display: inline-block;
-  width: 36px;
-  height: 48px;
-  border-bottom: 4px solid #ff6b81;
-  text-align: center;
-  font-size: 1.2em;
-  font-weight: bold;
-  margin: 0 4px;
-  background-color: #fff;
-  border-radius: 6px;
-  line-height: 48px;
-  vertical-align: middle;
-}
-
-.filled {
-  color: #28a745;
-}
-
-#alphabet-container {
-  padding: 20px;
+/* Styling for the helipad image */
+#helipad img {
   width: 100%;
-  min-height: 300px; /* Increased to fit 3 rows (80px * 3 + padding) */
-  border-radius: 15px;
-  position: relative; /* Ensure absolute children are positioned relative to this */
-  z-index: 3;
-  box-sizing: border-box;
-  margin-bottom: 20px;
-  /* background-color: #e6f3ff; 
-  border: 2px solid #4dabf7;  */
+  height: 100%;
+  object-fit: contain; /* Ensures the image scales properly without distortion */
 }
 
-.letter {
-  font-family: 'Comfortaa', cursive;
-  width: 65px;
-  height: 65px;
-  margin-left: 30px;
-  background-color: #4dabf7;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  font-size: 1.5em;
-  font-weight: bold;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-  cursor: grab;
-  transition: all 0.3s ease;
-}
-
-.letter:hover {
-  transform: scale(1.15);
-  background-color: #3694db;
-}
-
-button {
-  font-family: 'Chewy', cursive;
-  padding: 20px 40px;
-  letter-spacing: 3px;
-  font-size: 2em;
-  font-weight: bold;
-  color: #fff;
-  border: none;
-  border-radius: 20px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
-  margin-left: 0px;
-}
-
-#view-score-btn {
-  background-color: #6ac259;
-}
-
-#view-score-btn:hover {
-  background-color: #57a146;
-  transform: scale(1.05);
-}
-
-
-#close-score-btn {
-  background-color: #ff6f61;
-}
-
-#close-score-btn:hover {
-  background-color: #e65850;
-  transform: scale(1.05);
-}
-
-#return-to-menu-btn {
-  background-color: #ff6b81;
-  margin-top: 20px;
-}
-
-#return-to-menu-btn:hover{
-  background-color: #f81aaaf5;
-  transform: scale(1.05);
-}
-
-/* Score Popup */
-.popup {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: #fffbe6;
-  padding: 40px 50px;
-  border-radius: 25px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
-  z-index: 1000;
-  min-width: 320px;
-  text-align: center;
-}
-
-.popup h2 {
-  font-size: 2em;
-  color: #ff6b81;
-  margin-bottom: 20px;
-}
-
-#score-details {
-  font-size: 1.1em;
-  color: #444;
-  margin-bottom: 25px;
-  line-height: 1.6;
-}
-
-.feedback {
+/* Styling for the spaceship */
+#spaceship {
   position: absolute;
-  padding: 8px 16px;
-  border-radius: 10px;
-  color: #fff;
-  font-size: 1.2em;
-  font-weight: bold;
-  opacity: 0.95;
-  animation: fadeOut 2.6s forwards;
+  width: 150px; /* Width of the spaceship */
+  height: 150px; /* Height of the spaceship */
+  transition: left 0.1s linear; /* Smooth movement for the spaceship */
 }
 
-.feedback.correct {
-  background-color: #28a745;
+/* Styling for the spaceship image */
+#spaceship img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain; /* Ensures the image scales properly */
 }
 
-.feedback.wrong {
-  background-color: #dc3545;
-}
+
+
 
 @keyframes fadeOut {
   0% { opacity: 1; }
