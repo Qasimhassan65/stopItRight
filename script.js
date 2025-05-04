@@ -2,7 +2,7 @@ import { handleAudioUpload } from "./modules/audioUpload.js";
 import { handleItemContextMenu } from "./modules/contextMenu.js";
 import { handleDragStart, handleDragEnd } from "./modules/dragHandlers.js";
 import { handleEditModeButtonClick, handleSettingsButtonClick, handleSettingsCloseButtonClick, handleAddItemsButtonClick, handleAddItemsCloseButtonClick, handleSaveButtonClick, handleSaveCloseButtonClick, addTagOrSetting } from "./modules/editMode.js";
-import { handleSingleImageUpload, handleImageUpload } from "./modules/imageUpload.js";
+import { handleSingleImageUpload, handleChangeImageUpload } from "./modules/imageUpload.js";
 import { handleResizeStart } from "./modules/resizeHandlers.js";
 import { handleButtonClick, handleDescriptionInput, handleDescriptionKeyDown, handleTitleInput, handleTitleKeyDown, btnOffHandler, btnOnHandler, btnBlackHandler, btnWhiteHandler } from "./modules/tooltip.js";
 import { playSound, hideScreen, handleDownScaling, handleUpScaling, handleElementClick, disallowDelete } from "./modules/utils.js";
@@ -14,10 +14,11 @@ const spaceship = document.getElementById('spaceshipdiv');
 const spaceshipImg = spaceship.querySelector('img'); // Select the img element inside the spaceship div
 const gameContainer = document.querySelector('.game-container');
 const helipad = document.getElementById('helipaddiv');
+const background = document.getElementById('background');
 
 // Initial position and speed
 let positionX = 0; // Starting position from your HTML
-const speed = 7.5; // Speed of the spaceship (adjust as needed)
+let speed = 7.5; // Speed of the spaceship (adjust as needed)
 let direction = 1; // 1 for right, -1 for left
 let stopspaceship = false;
 
@@ -25,33 +26,22 @@ let stopspaceship = false;
 const containerWidth = gameContainer.clientWidth;
 const spaceshipWidth = spaceship.clientWidth;
 
-// Set initial image (moving right)
-spaceshipImg.src = './assets/spaceship_right.webp';
 
 // Animation loop to move the spaceship
 function moveSpaceship() {
-
-  if(!stopspaceship && !isEditing.value)
-  {    
+  if (!stopspaceship && !isEditing.value) {
+    console.log(speed);    
     // Update position
-    positionX += speed * direction;
+    positionX += speed;
 
-    // Check for collision with the right wall
-    if (positionX + spaceshipWidth >= containerWidth) {
-        positionX = containerWidth - spaceshipWidth; // Prevent overflow
-        direction = -1; // Reverse direction to move left
-        spaceshipImg.src = './assets/spaceship_left.webp'; // Change image to left-facing
-    }
-
-    // Check for collision with the left wall
-    if (positionX <= 0) {
-        positionX = 0; // Prevent overflow
-        direction = 1; // Reverse direction to move right
-        spaceshipImg.src = './assets/spaceship_right.webp'; // Change image to right-facing
+    // Check for wrap-around when crossing the right edge
+    if (positionX >= containerWidth) {
+      positionX = -spaceshipWidth; // Reappear from the left
     }
 
     // Apply the new position to the spaceship
-    spaceship.style.left = positionX + 'px';
+    if(!isEditingGame) spaceship.style.left = positionX + 'px';
+    else  spaceship.style.left = positionX+140 + 'px';
 
     // Continue the animation
     requestAnimationFrame(moveSpaceship);
@@ -59,209 +49,53 @@ function moveSpaceship() {
 }
 
 function handleClick() {
-  if(!isEditing.value)
-  {
-  stopspaceship = true;
+  if (!isEditing.value) {
+    stopspaceship = true;
 
-  // Get bounding rectangles for both spaceship and helipad
-  const spaceshipRect = spaceship.getBoundingClientRect();
-  const helipadRect = helipad.getBoundingClientRect();
+    // Get bounding rectangles for both spaceship and helipad
+    const spaceshipRect = spaceship.getBoundingClientRect();
+    const helipadRect = helipad.getBoundingClientRect();
 
-  // Get center positions
-  const spaceshipCenterX = spaceshipRect.left + (spaceshipRect.width / 2);
-  const spaceshipCenterY = spaceshipRect.top + (spaceshipRect.height / 2);
+    // Get center positions
+    const spaceshipCenterX = spaceshipRect.left + (spaceshipRect.width / 2);
+    const spaceshipCenterY = spaceshipRect.top + (spaceshipRect.height / 2);
 
-  const helipadCenterX = helipadRect.left + (helipadRect.width / 2);
-  const helipadCenterY = helipadRect.top + (helipadRect.height / 2);
+    const helipadCenterX = helipadRect.left + (helipadRect.width / 2);
+    const helipadCenterY = helipadRect.top + (helipadRect.height / 2);
 
-  const xRange = 80;
-  const yRange = 40;
+    const xRange = 80;
+    const yRange = 40;
 
-  const withinX = Math.abs(spaceshipCenterX - helipadCenterX) <= xRange;
-  const withinY = Math.abs(spaceshipCenterY - helipadCenterY) <= yRange;
+    const withinX = Math.abs(spaceshipCenterX - helipadCenterX) <= xRange;
+    const withinY = Math.abs(spaceshipCenterY - helipadCenterY) <= yRange;
 
-  if (withinX && withinY) {
-    console.log('win');
-    playSound(winSound);
-  } else {
-    console.log('Missed! Press R to restart.');
-    playSound(wrongSound);
-  }
-
-  document.addEventListener('keydown', handleRestart);
-}
-}
-
-
-// Function to handle restart
-function handleRestart(event) {
-  if (event.key === 'r' || event.key === 'R') {
-      stopspaceship = false; // Resume movement
-      positionX = 0; // Reset to initial position
-      direction = 1; // Reset direction to right
-      spaceshipImg.src = './assets/spaceship_right.webp'; // Reset image
-      spaceship.style.left = positionX + 'px'; // Reset position
-      console.log('Game restarted!');
-      document.removeEventListener('keydown', handleRestart); // Remove listener after restart
-      moveSpaceship();
-  }
-}
-
-// --------------- //
-//  CREATE BLANKS  //
-// --------------- //
-const createBlanksInWords = () => {
-  const blanksData = [];
-  const wordSpans = document.querySelectorAll('[id^="worditem"][id$="Text"]');
-  let totalBlanks = 0;
-
-  wordSpans.forEach((wordSpan, i) => {
-    if (!wordSpan) return;
-
-    const wordContainer = wordSpan.closest('[id^="wordscontainerdivItem"]');
-    if (!wordContainer || wordContainer.style.display === "none") return;
-
-    const indexMatch = wordSpan.id.match(/worditem(\d+)Text/);
-
-    if (indexMatch && indexMatch[1]) {
-      const index = parseInt(indexMatch[1], 10) - 1;
-
-      if (wordSpan.textContent.trim().includes("_")) {
-        const dictIndex = wordindexs[index] !== undefined ? wordindexs[index] : index % gameDictionary.length;
-        wordSpan.textContent = gameDictionary[dictIndex]?.text || "Unknown";
-      }
-    }
-  });
-
-  wordSpans.forEach((wordSpan, i) => {
-    // Existing code...
-    const originalWord = wordSpan.textContent.trim();
-    const wordChars = originalWord.split("");
-    const numBlanks = Math.floor(Math.random() * Math.min(2, wordChars.length)) + 1;
-    const blankPositions = [];
-
-    const validPositions = wordChars
-      .map((char, idx) => ({ char, idx }))
-      .filter(({ char }) => char.trim() !== "")
-      .map(({ idx }) => idx);
-
-    while (blankPositions.length < numBlanks && validPositions.length > 0) {
-      const randomIdx = Math.floor(Math.random() * validPositions.length);
-      blankPositions.push(validPositions.splice(randomIdx, 1)[0]);
-    }
-
-    const expectedLetters = blankPositions.map((pos) => wordChars[pos].toUpperCase());
-    blankPositions.forEach((pos) => (wordChars[pos] = "_"));
-
-    wordSpan.textContent = wordChars.join("");
-    blanksData.push({ wordId: wordSpan.id, originalWord: originalWord, blankPositions: blankPositions, expectedLetters: expectedLetters });
-    totalBlanks += blankPositions.length;
-  });
-
-  remainingItems = totalBlanks;
-  itemsLeftNumber.innerHTML = remainingItems;
-
-  return blanksData;
-};
-
-// ---------------------- //
-//  HANDLE DRAG AND DROP  //
-// ---------------------- //
-const setupDragAndDrop = (blanksData) => {
-  const gameContainer = document.querySelector(".game-container");
-  const dragOverHandler = (e) => e.preventDefault();
-
-  const dropHandler = (e) => {
-    e.preventDefault();
-    if (isEditing?.value || gameWon) return;
-
-    let letter = e.dataTransfer.getData("text/plain");
-    const { clientX: dropX, clientY: dropY } = e;
-
-    if (letter.startsWith("lettercontainer")) {
-      const letterTextElement = document.getElementById(`alphabetitem${parseInt(letter.replace("lettercontainer", ""), 10)}Text`);
-      if (!letterTextElement) return playSound(wrongSound), showFeedback(false);
-      letter = letterTextElement.textContent.toUpperCase();
-    }
-
-    let closestSpan = null;
-    let minDistance = Infinity;
-
-    document.querySelectorAll('[id^="worditem"][id$="Text"]').forEach((span) => {
-      const rect = span.getBoundingClientRect();
-      const tolerance = 20;
-
-      if (dropX >= rect.left - tolerance && dropX <= rect.right + tolerance && dropY >= rect.top - tolerance && dropY <= rect.bottom + tolerance) {
-        const distance = Math.sqrt(Math.pow(dropX - (rect.left + rect.width / 2), 2) + Math.pow(dropY - (rect.top + rect.height / 2), 2));
-
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestSpan = span;
-        }
-      }
-    });
-
-    if (!closestSpan || !blanksData.find((data) => data.wordId === closestSpan.id)) {
+    if (withinX && withinY) {
+      console.log('win');
+      playSound(winSound);
+      // Update background to show win screen
+      background.style.zIndex = '500';
+      background.src = './assets/winScreen.webp';
+      btnDiv.style.display = 'none'
+      
+    } else {
+      console.log('Missed!');
       playSound(wrongSound);
-      showFeedback(false);
-      return;
+      setTimeout(() => {
+        location.reload(); // Refresh the page after 0.5 second
+      }, 500);
     }
-
-    const wordData = blanksData.find((data) => data.wordId === closestSpan.id);
-    const wordChars = closestSpan.textContent.split("");
-    let filled = false;
-
-    for (let i = 0; i < wordData.blankPositions.length; i++) {
-      const pos = wordData.blankPositions[i];
-      if (wordChars[pos] !== "_") continue;
-
-      if (letter === wordData.expectedLetters[i]) {
-        wordChars[pos] = wordData.originalWord[pos];
-
-        closestSpan.textContent = wordChars.join("");
-        remainingItems--;
-        itemsLeftNumber.innerHTML = remainingItems;
-        filled = true;
-
-        playSound(collectSound);
-        showFeedback(true);
-
-        if (remainingItems === 0) {
-          winSound.play();
-          btn.style.display = itemsLeftNumber.style.display = itemsLeft.style.display = "none";
-          gameWon = true;
-        }
-
-        return;
-      }
-    }
-
-    if (!filled) playSound(wrongSound), showFeedback(false);
-  };
-
-  if (currentDragOverHandler) gameContainer.removeEventListener("dragover", currentDragOverHandler);
-  if (currentDropHandler) gameContainer.removeEventListener("drop", currentDropHandler);
-
-  gameContainer.addEventListener("dragover", dragOverHandler);
-  gameContainer.addEventListener("drop", dropHandler);
-
-  currentDragOverHandler = dragOverHandler;
-  currentDropHandler = dropHandler;
-};
-
-// ---------------- //
-//  SHOW FEEDBACK   //
-// ---------------- //
-function showFeedback(isCorrect) {
-  const feedback = document.createElement("div");
-  feedback.className = `feedback ${isCorrect ? "correct" : "wrong"}`;
-  feedback.textContent = isCorrect ? "✓ Right Answer" : "✗ Wrong Answer";
-
-  const gameContainer = document.querySelector(".game-container");
-  feedback.style.cssText = gameContainer ? "position:absolute;top:100px;right:20px;z-index:9999;" : "position:fixed;top:160px;left:525px;z-index:9999;";
-  (gameContainer || document.body).appendChild(feedback);
-  setTimeout(() => feedback.remove(), 2000);
+  }
 }
+
+
+const speedInput = document.getElementById('speedInput');
+const decreaseSpeedBtn = document.getElementById('decreaseSpeedBtn');
+const increaseSpeedBtn = document.getElementById('increaseSpeedBtn');
+
+// Initialize speed value
+let currentSpeed = parseFloat(speedInput.value);
+
+
 
 
 // ---------------- //
@@ -279,157 +113,37 @@ const getDraggedItemIndex = () => {
   return null;
 };
 
-const deleteItem = (index) => {
-  if (index < 0 || index >= items.length) return;
 
-  const isWordItem = items[index]?.id.startsWith("wordscontaineritem");
-  const isLetterItem = items[index]?.id.startsWith("alphabetcontainer");
+// const handleChangeImage = (event, itemIndex, params) => {
+//   const wordItem = params.items[itemIndex];
+//   const match = wordItem?.id.match(/wordscontaineritem(\d+)/);
+//   if (!wordItem?.id.startsWith("wordscontaineritem") || !match) return;
 
-  if (isWordItem) {
-    const wordText = document.getElementById(`worditem${index}Text`)?.textContent;
+//   const wordId = parseInt(match[1], 10);
+//   const imageElement = document.getElementById(`worditem${wordId}Image`);
+//   const file = event.target.files?.[0];
+//   if (!imageElement || !file) return;
 
-    if (wordText) {
-      const wordIndex = gameDictionary.findIndex((entry) => entry.text?.toUpperCase() === wordText.toUpperCase());
-      if (wordIndex !== -1) gameDictionary.splice(wordIndex, 1);
-    }
-  } else if (isLetterItem) {
-    const letterIndex = parseInt(items[index]?.id.match(/alphabetcontainer(\d+)/)?.[1], 10);
+//   const oldImagePath = imageElement.src;
+//   const reader = new FileReader();
 
-    if (letterIndex) {
-      const letterText = document.getElementById(`alphabetitem${letterIndex}Text`)?.textContent?.toUpperCase();
+//   reader.onload = () => {
+//     const newImagePath = reader.result;
+//     imageElement.src = newImagePath;
 
-      if (letterText && letterText === letterlist[letterIndex - 1]) {
-        const letterListIndex = letterlist.indexOf(letterText);
-        if (letterListIndex !== -1) letterlist.splice(letterListIndex, 1);
-      }
-    }
-  }
+//     const wordText = document.getElementById(`worditem${wordId}Text`)?.textContent.trim();
+//     const dictIndex = params.wordindexs[wordId - 1] ?? params.gameDictionary.findIndex((entry) => entry.imagePath === oldImagePath || (wordText && entry.text.toUpperCase() === wordText.toUpperCase()));
 
-  if (itemDivs[index]) itemDivs[index].style.display = "none";
+//     if (dictIndex !== -1) params.gameDictionary[dictIndex].imagePath = newImagePath;
+//     else if (wordId > 0 && !params.wordindexs.includes(wordId - 1)) {
+//       params.gameDictionary.push({ text: wordText || "", imagePath: newImagePath });
+//       params.wordindexs[wordId - 1] = params.gameDictionary.length - 1;
+//     }
+//   };
 
-  const resizeBoxIndex = index * 4;
-  if (resizeBoxIndex < resizeBoxes.length) resizeBoxes.splice(resizeBoxIndex, 4);
+//   reader.readAsDataURL(file);
+// };
 
-  delItemCount++;
-
-  if (isWordItem) {
-    remainingItems = document.querySelectorAll('[id^="worditem"][id$="Text"]').length;
-    itemsLeftNumber.innerHTML = remainingItems;
-  }
-};
-
-const handleChangeWord = (itemIndex, params) => {
-  const updateWord = () => {
-    const newWord = wordTextElement.textContent.trim();
-    if (!newWord) {
-      // Use an in-game visual instead
-      // alert("Invalid word. Restoring original word.");
-      wordTextElement.textContent = oldWord;
-    } else {
-      const dictIndex = params.wordindexs[wordId - 1] ?? params.gameDictionary.findIndex((entry) => entry.text.toUpperCase() === oldWord.toUpperCase());
-
-      if (dictIndex !== -1) params.gameDictionary[dictIndex].text = newWord;
-      else if (wordId > 0 && !params.wordindexs.includes(wordId - 1)) {
-        params.gameDictionary.push({ text: newWord, imagePath: wordItem.querySelector("img")?.src || "" });
-        params.wordindexs[wordId - 1] = params.gameDictionary.length - 1;
-      }
-    }
-
-    wordTextElement.contentEditable = false;
-    wordTextElement.style.cssText = "";
-  };
-
-  const helper = (e, wordTextElement) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      wordTextElement.blur();
-    }
-  };
-
-  const wordItem = params.items[itemIndex];
-  const match = wordItem?.id.match(/wordscontaineritem(\d+)/);
-  if (!wordItem?.id.startsWith("wordscontaineritem") || !match) return;
-
-  const wordId = parseInt(match[1], 10);
-  const wordTextElement = document.getElementById(`worditem${wordId}Text`);
-  if (!wordTextElement) return;
-
-  const oldWord = wordTextElement.textContent.trim();
-  wordTextElement.contentEditable = true;
-  wordTextElement.style.cssText = "border:2px solid #007bff;background:#f0f8ff;padding:2px;";
-  wordTextElement.focus();
-
-  wordTextElement.addEventListener("blur", updateWord, { once: true });
-  wordTextElement.addEventListener("keydown", (e) => helper(e, wordTextElement), { once: true });
-};
-
-const handleChangeImage = (event, itemIndex, params) => {
-  const wordItem = params.items[itemIndex];
-  const match = wordItem?.id.match(/wordscontaineritem(\d+)/);
-  if (!wordItem?.id.startsWith("wordscontaineritem") || !match) return;
-
-  const wordId = parseInt(match[1], 10);
-  const imageElement = document.getElementById(`worditem${wordId}Image`);
-  const file = event.target.files?.[0];
-  if (!imageElement || !file) return;
-
-  const oldImagePath = imageElement.src;
-  const reader = new FileReader();
-
-  reader.onload = () => {
-    const newImagePath = reader.result;
-    imageElement.src = newImagePath;
-
-    const wordText = document.getElementById(`worditem${wordId}Text`)?.textContent.trim();
-    const dictIndex = params.wordindexs[wordId - 1] ?? params.gameDictionary.findIndex((entry) => entry.imagePath === oldImagePath || (wordText && entry.text.toUpperCase() === wordText.toUpperCase()));
-
-    if (dictIndex !== -1) params.gameDictionary[dictIndex].imagePath = newImagePath;
-    else if (wordId > 0 && !params.wordindexs.includes(wordId - 1)) {
-      params.gameDictionary.push({ text: wordText || "", imagePath: newImagePath });
-      params.wordindexs[wordId - 1] = params.gameDictionary.length - 1;
-    }
-  };
-
-  reader.readAsDataURL(file);
-};
-
-const handleDeleteBtnMouseUp = () => {
-  if (!isDragging.value || isResizing.value) {
-    playSound(wrongSound);
-    binTooltip.style.display = binTooltipRectangle.style.display = "block";
-    setTimeout(() => (binTooltip.style.display = binTooltipRectangle.style.display = "none"), 5000);
-    return;
-  }
-
-  const targetIndex = getDraggedItemIndex();
-
-  if (targetIndex === null || targetIndex === 0) {
-    playSound(wrongSound);
-    disallowDelete({ targetDiv: itemDivs[targetIndex] || btnDiv, lastX: targetIndex === 0 ? btnLastX : savedX, lastY: targetIndex === 0 ? btnLastY : savedY, i: targetIndex, type: targetIndex === 0 ? "button" : "item", isDragging, savedX, savedY, allowItemMove });
-    return;
-  }
-
-  const isLetterItem = items[targetIndex]?.id.startsWith("alphabetcontainer");
-
-  if (isLetterItem) {
-    const letterIndex = parseInt(items[targetIndex]?.id.match(/alphabetcontainer(\d+)/)?.[1], 10);
-    const letterText = document.getElementById(`alphabetitem${letterIndex}Text`)?.textContent.toUpperCase();
-
-    if (letterText && wordindexs.some((idx) => gameDictionary[idx]?.text.toUpperCase()?.includes(letterText))) {
-      playSound(wrongSound);
-      disallowDelete({ targetDiv: itemDivs[targetIndex], lastX: savedX, lastY: savedY, i: targetIndex, type: "item", isDragging, savedX, savedY, allowItemMove });
-      return;
-    }
-  }
-
-  playSound(deleteSound);
-  deleteItem(targetIndex);
-
-  if (!items[targetIndex].id.startsWith("alphabetcontainer")) {
-    remainingItems = document.querySelectorAll('[id^="worditem"][id$="Text"]').length;
-    itemsLeftNumber.innerHTML = remainingItems;
-  }
-};
 
 const sendPM = () => {
   if (areChangesSaved.value) {
@@ -670,14 +384,11 @@ if (snapshot !== "true" && snapshot !== true) {
   // Edit Mode
   let cursorType = { value: "default" };
 
-  editModeBtns.push(addItemsBtn);
   editModeBtns.push(settingsBtn);
   editModeBtns.push(saveBtn);
-  editModeBtns.push(deleteBtn);
 
   // Add event listeners for edit mode buttons
-  const editModeParams = { cursorType, clickSound, isEditing, items, resizeBoxes, isItemCollected, remainingItems, showTooltip, isTooltipOpen, btnDiv, editModeBtns, currSelectedElement, settingsScreen, btnClicks, binTooltip, binTooltipRectangle, refreshBtn };
-  const dragParams = { isDragging, isResizing, savedX, savedY, allowItemMove, teleporationFix, deltaX, deltaY, isEditing, isTooltipOpen, btnLastX, btnLastY };
+  const editModeParams = { cursorType, clickSound, isEditing, items, resizeBoxes, isItemCollected, showTooltip, isTooltipOpen, btnDiv, editModeBtns, currSelectedElement, settingsScreen, btnClicks, binTooltip, binTooltipRectangle, refreshBtn };
 
   // Handle edit mode button click
   editModeBtn.addEventListener("click", () => {
@@ -687,13 +398,8 @@ if (snapshot !== "true" && snapshot !== true) {
     handleEditModeButtonClick(editModeParams);
 
     if (!wasEditing && isEditing.value) {
-      remainingItems = 0;
-      itemsLeftNumber.innerHTML = remainingItems;
+      [settingsScreen].forEach(hideScreen);
 
-      [btnDiv, btn, itemsLeft, itemsLeftNumber].forEach((el) => (el.style.display = "block"));
-      [settingsScreen, itemsAdditionScreen].forEach(hideScreen);
-
-      //addDragListenersToAllItems(itemDivs, dragParams);
     }
     else{
      isEditing.value = false;
@@ -702,6 +408,11 @@ if (snapshot !== "true" && snapshot !== true) {
 
   refreshBtn.addEventListener("click", () => {
     gameWon = false;
+    positionX = 0;
+    background.style.zIndex = '1';
+    background.src = './assets/background.webp';
+    spaceship.style.zIndex = '3';
+    helipad.style.zIndex = '2';
     playSound(clickSound);
     stopspaceship = false;
     isEditing.value = false;
@@ -796,44 +507,53 @@ if (snapshot !== "true" && snapshot !== true) {
     binTooltip.style.display = binTooltipRectangle.style.display = "none";
   });
 
+  
+  // Update speed on button clicks
+  decreaseSpeedBtn.addEventListener('click', () => {
+    if (currentSpeed > 1) {
+        currentSpeed -= 0.5;
+        speedInput.value = currentSpeed.toFixed(1);
+        speed = currentSpeed;
+    }
+  });
+
+  increaseSpeedBtn.addEventListener('click', () => {
+    if (currentSpeed < 12) {
+        currentSpeed += 0.5;
+        speedInput.value = currentSpeed.toFixed(1);
+        speed = currentSpeed;
+    }
+  });
+
   refreshBtn.addEventListener("mouseleave", () => handleDownScaling(refreshBtn));
 
-  // Items Deletion
-  deleteBtn.addEventListener("mouseup", handleDeleteBtnMouseUp);
+
 
   // On Board Images Resizing
   for (let i = 0; i < resizeBoxes.length; i++) {
     resizeBoxes[i].addEventListener("mousedown", (e) => handleResizeStart(e, { i: parseInt(i / 4), direction: i % 4 === 0 ? "TL" : i % 4 === 1 ? "TR" : i % 4 === 2 ? "BL" : "BR", isResizing, lastScales, allowItemResize, resizeLastX, item: items[parseInt(i / 4)], itemDiv: itemDivs[parseInt(i / 4)], lastDirection, resizeScale }));
   }
 
+
   // Context Menu
-  for (let i = 1; i < items.length; i++) {
-    if (items[i]?.id.startsWith("wordscontaineritem")) {
+    for (let i = 1; i < items.length; i++) {
       items[i].addEventListener("contextmenu", (e) => {
         currentItemCM = i;
-        handleItemContextMenu(e, { isEditing, contextMenu, changeImageBtn }); // Placeholder, will be updated to handleWordItemContextMenu
+        handleItemContextMenu(e, { isEditing, contextMenu, changeImageBtn });
       });
     }
-  }
-
-  // Hide menu after click
-  document.getElementById("changeImage").addEventListener("click", () => (contextMenu.style.display = "none"));
-
-  // Image Input Listener
-  changeImageInput.addEventListener("change", (e) => handleChangeImage(e, currentItemCM, { items, gameDictionary, wordindexs }));
-
-  // Context Menu Options
-  document.getElementById("changeWord").addEventListener("click", () => {
-    handleChangeWord(currentItemCM, { items, gameDictionary, wordindexs, createBlanksInWords, setupDragAndDrop, remainingItems, itemsLeftNumber });
-    contextMenu.style.display = "none"; // Hide menu after click
-  });
-
-  document.addEventListener("click", () => (contextMenu.style.display = "none"));
-
-  // Disable selection for the whole document
-  document.addEventListener("DOMContentLoaded", () => (document.body.style.userSelect = "none"));
-
-  changeImageBtn.addEventListener("click", () => changeImageInput.click());
+  
+    changeImageInput.addEventListener("change", (e) => handleChangeImageUpload(e, items[currentItemCM]));
+  
+    document.addEventListener("click", function () {
+      contextMenu.style.display = "none";
+    });
+  
+    document.addEventListener("DOMContentLoaded", () => {
+      document.body.style.userSelect = "none"; // Disable selection for the whole document
+    });
+  
+    changeImageBtn.addEventListener("click", () => changeImageInput.click());
 
   // Game Tooltip
   title.addEventListener("input", () => {

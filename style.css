@@ -488,7 +488,6 @@ div {
   position: absolute;
   width: 150px; /* Width of the spaceship */
   height: 150px; /* Height of the spaceship */
-  transition: left 0.1s linear; /* Smooth movement for the spaceship */
 }
 
 /* Styling for the spaceship image */
