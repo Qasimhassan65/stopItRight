@@ -15,12 +15,6 @@ export const handleEditModeButtonClick = (params) => {
       params.refreshBtn.style.display = "block";
     }
 
-    // Hide the bin tooltip
-    if (params.btnClicks !== null && params.btnClicks !== undefined) {
-      params.binTooltip.style.display = "none";
-      params.binTooltipRectangle.style.display = "none";
-    }
-
     // Make the title & the description non-editable
     title.style.border = description.style.border = "2px solid transparent";
 
@@ -63,18 +57,6 @@ export const handleEditModeButtonClick = (params) => {
       params.refreshBtn.style.display = "none";
     }
 
-    // Show the bin tooltip
-    if (params.btnClicks !== null && params.btnClicks !== undefined && params.btnClicks.value < 2) {
-      params.btnClicks.value += 1;
-
-      params.binTooltip.style.display = "block";
-      params.binTooltipRectangle.style.display = "block";
-
-      setTimeout(() => {
-        params.binTooltip.style.display = "none";
-        params.binTooltipRectangle.style.display = "none";
-      }, 5000);
-    }
 
     // Game Tooltip is open
     if (params.isTooltipOpen.value) {
