@@ -311,7 +311,6 @@ if (snapshot !== "true" && snapshot !== true) {
     else console.error(`Missing resize boxes for item ${i}:`, { tl, tr, bl, br });
   }
 
-  
   // Audios
   playableAudios.push(clickSound);
   playableAudios.push(winSound);
