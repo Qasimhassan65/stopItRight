@@ -30,7 +30,6 @@
         <!-- win Background -->
         <img id="winbackground" style="position: absolute; left: 0px; top: 0px; display: none;" src="./assets/winScreen.webp" style="z-index: 500;" width="1024" height="1024" />
 
-
         <!-- Information Screen -->
         <img id="gameTooltip" src="assets/instructionsTemplate.webp" style="position: absolute; left: 0px; top: 0px; z-index: 0; display: none" width="1024" height="1024" />
 
@@ -116,6 +115,18 @@
               <input type="file" id="bgImgInput" accept="image/*" class="image-upload-input" />
             </div>
           </div>
+
+          <!-- Win Screen Section -->
+        <div class="settings-section">
+          <h1 class="settings-section-title">Win Screen Image</h1>
+
+          <div class="image-upload-container">
+            <img id="winImage" src="./assets/winScreen.webp" class="image-upload-preview" style="display: block;" />
+            <label for="winImgInput" class="custom-button">Upload Image</label>
+            <input type="file" id="winImgInput" accept="image/*" class="image-upload-input" />
+          </div>
+        </div>
+
 
           <!-- Spaceship Speed Section -->
           <div class="settings-section">

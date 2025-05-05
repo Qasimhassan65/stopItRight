@@ -69,7 +69,7 @@ function handleClick() {
 
     if (withinX && withinY) {
       playSound(winSound);
-      winbackground.style.zIndex = globalZIndex + 1;
+      winbackground.style.zIndex = '9999';
       winbackground.style.display = "block"
       btnDiv.style.display = 'none';
       gameWon = true;
@@ -252,6 +252,11 @@ const settingsScreen = document.getElementById("settingsScreen");
 const bgImg = document.getElementById("bgImage");
 const bgImgInput = document.getElementById("bgImgInput");
 
+const winScreen = document.getElementById("winbackground");
+const winImg = document.getElementById("winImage");
+const winImgInput = document.getElementById("winImgInput");
+
+
 
 // -------------- //
 //  CONTEXT MENU  //
@@ -423,8 +428,14 @@ if (snapshot !== "true" && snapshot !== true) {
   // Game Settings
   bgImgInput.addEventListener("change", (e) => {
     sendPM();
-    handleSingleImageUpload(e, { targetImg: background, newImg: bgImg, bgimagesrc });
+    handleSingleImageUpload(e, { targetImg: background, newImg: bgImg});
   });
+
+  winImgInput.addEventListener("change", (e) => {
+    sendPM();
+    handleSingleImageUpload(e, { targetImg: winScreen, newImg: winImg});
+  });
+  
 
   settingsBtn.addEventListener("click", () => handleSettingsButtonClick({ cleanUp: false, clickSound, settingsScreen, saveScreen }));
   settingsCloseBtn.addEventListener("click", () => handleSettingsCloseButtonClick({ clickSound, settingsScreen }));
