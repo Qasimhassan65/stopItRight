@@ -80,7 +80,7 @@
             <div id="resizeBox2TR" style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red"></div>
             <div id="resizeBox2BL" style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red"></div>
             <div id="resizeBox2BR" style="position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red"></div>
-  
+            
             <img id="helipad" src="./assets/helipad.webp" style="border: 1px solid transparent" width="100%" height="100%" />
           </div>
 
@@ -89,7 +89,9 @@
             <div id="resizeBox1TR" style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red"></div>
             <div id="resizeBox1BL" style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red"></div>
             <div id="resizeBox1BR" style="position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red"></div>
-            <img id="rotateBtn" src="./assets/rotate.webp" style="position: absolute; right: -30px; top: 60px; width: 30px; height: 30px; visibility: hidden; cursor: pointer; z-index: 4001" />
+            
+            <img id="rotateBtn" src="./assets/rotate.webp" style="position: absolute; right: -30px; top: 60px; width: 30px; height: 30px; visibility: hidden; cursor: pointer; z-index: 4" />
+            
             <img id="spaceship" src="./assets/spaceship_right.webp" style="border: 1px solid transparent" width="150px" height="150px" />
           </div>
 
@@ -98,9 +100,9 @@
             <div id="resizeBox3TR" style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red"></div>
             <div id="resizeBox3BL" style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red"></div>
             <div id="resizeBox3BR" style="position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red"></div>
+            
             <button id="stopSpaceship" style="padding: 10px 20px; font-size: 22px; cursor: pointer; border: 1px solid transparent">Stop Spaceship</button>
           </div>
-
         </div>
 
       
@@ -122,6 +124,7 @@
           <!-- Spaceship Speed Section -->
           <div class="settings-section">
             <h1 class="settings-section-title">Spaceship Speed</h1>
+            
             <div class="speed-control-container" style="display: flex; align-items: center;">
               <label for="speedInput" class="speed-label" style="margin-right: 10px;">Speed:</label>
               <button id="decreaseSpeedBtn" class="speedbutton" style="width: 60px; height: 60px; font-size: 27px;">−</button>
@@ -133,6 +136,7 @@
           <!-- Button Color Section -->
           <div class="settings-section">
             <h1 class="settings-section-title">Stop Button Color</h1>
+            
             <div class="color-selection-row">
               <h2 class="color-selection-label">Button Color</h2>
               <div class="color-selection-controls">
@@ -148,7 +152,6 @@
                 <span class="color-label">Select Text Color</span>
               </div>
             </div>
-
           </div>
 
           <!-- Tooltip Section -->
@@ -289,7 +292,7 @@
 
         // Wait until all images are loaded before drawing
         let loadedImagesCount = 0;
-        const imagesToLoad = [background, item1, item2, item3, item4, btn];
+        const imagesToLoad = [background,  btn];
 
         // Function to check if all images are loaded
         function checkImagesLoaded() {
@@ -308,17 +311,8 @@
         function defaultInitialization() {
           // Background
           ctx.drawImage(imagesToLoad[0], 0, 0, 1024, 1024);
-
-          // Items
-          ctx.drawImage(imagesToLoad[1], 170, 750, 175, 175);
-          ctx.drawImage(imagesToLoad[2], 880, 280, 105, 146);
-          ctx.drawImage(imagesToLoad[3], 120, 410, 205, 100);
-          ctx.drawImage(imagesToLoad[4], 770, 100, 160, 160);
-
           // Btn
-          ctx.drawImage(imagesToLoad[5], 50, 50, 60, 60);
-
-          
+          ctx.drawImage(imagesToLoad[1], 50, 50, 60, 60);
         }
 
         // Function to draw the images on the canvas
@@ -329,27 +323,7 @@
             // else
             ctx.drawImage(imagesToLoad[0], 0, 0, 1024, 1024);
 
-            // Items
-            if (configData.elements) {
-              for (let i = 0; i < configData.elements.length; i++) {
-                const element = configData.elements[i];
-
-                const width = element.width;
-                const height = element.height;
-                const scale = element.scale;
-
-                const x = parseFloat(element.x.split("px")[0]);
-                const y = parseFloat(element.y.split("px")[0]);
-
-                // ctx.drawImage(element.image, x, y, width * scale, height * scale);
-                ctx.drawImage(imagesToLoad[i + 1], x, y, width * scale, height * scale);
-              }
-            } else {
-              ctx.drawImage(imagesToLoad[1], 170, 750, 175, 175);
-              ctx.drawImage(imagesToLoad[2], 880, 280, 105, 146);
-              ctx.drawImage(imagesToLoad[3], 120, 410, 205, 100);
-              ctx.drawImage(imagesToLoad[4], 770, 100, 160, 160);
-            }
+            
 
             // Btn
             if (configData.tooltip) {
@@ -360,14 +334,11 @@
                 const scale = configData.tooltip.btnScale;
 
                 // ctx.drawImage(src, x, y, 60 * scale, 60 * scale);
-                ctx.drawImage(imagesToLoad[5], x, y, 60 * scale, 60 * scale);
+                ctx.drawImage(imagesToLoad[1], x, y, 60 * scale, 60 * scale);
               }
             } else {
-              ctx.drawImage(imagesToLoad[5], 50, 50, 60, 60);
+              ctx.drawImage(imagesToLoad[1], 50, 50, 60, 60);
             }
-
-            // Items Left
-            ctx.drawImage(imagesToLoad[6], 900, 30, 87, 65);
 
             ctx.font = "400 40px 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
             ctx.fillStyle = "#000";
@@ -400,15 +371,7 @@
       // Get all the DOM images here
       const background = document.getElementById("background");
 
-      const item1 = document.getElementById("item1");
-      const item2 = document.getElementById("item2");
-      const item3 = document.getElementById("item3");
-      const item4 = document.getElementById("item4");
-
       const btn = document.getElementById("btn");
-
-      const itemsLeft = document.getElementById("itemsLeft");
-      const itemsLeftNumber = document.getElementById("itemsLeftNumber");
 
       const title = document.getElementById("title");
       const description = document.getElementById("description");
@@ -420,46 +383,6 @@
       document.addEventListener("keydown", (e) => {
         if (e.key === "ArrowRight") window.parent.postMessage("ArrowRight", parentUrl);
         else if (e.key === "ArrowLeft") window.parent.postMessage("ArrowLeft", parentUrl);
-      });
-
-      // Variables to store touch positions
-      let touchStartX, touchStartY, touchEndX, touchEndY;
-      touchStartX = touchStartY = touchEndX = touchEndY = 0;
-
-      // Threshold to determine a valid swipe (in pixels)
-      const swipeThreshold = 200;
-
-      // Function to detect swipe direction
-      function detectSwipe() {
-        const deltaX = touchEndX - touchStartX;
-        const deltaY = touchEndY - touchStartY;
-
-        // Horizontal
-        if (Math.abs(deltaX) > Math.abs(deltaY)) {
-          // Right
-          if (deltaX > swipeThreshold) window.parent.postMessage("ArrowLeft", parentUrl);
-          // Left
-          else if (deltaX < -swipeThreshold) window.parent.postMessage("ArrowRight", parentUrl);
-        }
-      }
-
-      // Detect touch start (on mobile devices)
-      document.addEventListener("touchstart", (e) => {
-        // Get initial touch position
-        const touch = e.touches[0];
-        touchStartX = touch.pageX;
-        touchStartY = touch.pageY;
-      });
-
-      // Detect touch end (finalize swipe detection)
-      document.addEventListener("touchend", (e) => {
-        // Get final touch position
-        const touch = e.changedTouches[0];
-        touchEndX = touch.pageX;
-        touchEndY = touch.pageY;
-
-        // Determine swipe direction
-        detectSwipe();
       });
 
       // Get the div defined above by its id

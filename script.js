@@ -7,78 +7,48 @@ import { handleResizeStart } from "./modules/resizeHandlers.js";
 import { handleButtonClick, handleDescriptionInput, handleDescriptionKeyDown, handleTitleInput, handleTitleKeyDown, btnOffHandler, btnOnHandler, btnBlackHandler, btnWhiteHandler } from "./modules/tooltip.js";
 import { playSound, hideScreen, handleDownScaling, handleUpScaling, handleElementClick, disallowDelete } from "./modules/utils.js";
 
-// ------------------ //
-//  HELPER FUNCTIONS  //
-// ------------------ //
-const spaceship = document.getElementById('spaceshipdiv');
-const spaceshipImg = spaceship.querySelector('img'); // Select the img element inside the spaceship div
-const gameContainer = document.querySelector('.game-container');
-const helipad = document.getElementById('helipaddiv');
-const winbackground = document.getElementById('winbackground');
-let bgimagesrc = background.src;
-
-// Initial position and speed
-let positionX = 0; // Starting position from your HTML\
-let positionY = 427; // Starting Y position from your HTML
-let speed = 7.5; // Speed of the spaceship (adjust as needed)
-let direction = 1; // 1 for right, -1 for left
-let stopspaceship = false;
-
-// Get the boundaries of the game container
-const containerWidth = gameContainer.clientWidth;
-const spaceshipWidth = spaceship.clientWidth;
-const containerHeight = gameContainer.clientHeight;
-const spaceshipHeight = spaceship.clientHeight;
-
-
-// Animation loop to move the spaceship
+// -----------------//
+//  MOVE SPACESHIP  //
+// -----------------//
 function moveSpaceship() {
   if (!stopspaceship && !isEditing.value) {
-    // Convert angle to radians for trigonometric calculations
     const angleRad = currentAngle * (Math.PI / 180);
-    // Update position based on angle and speed
+
     positionX += speed * Math.cos(angleRad);
     positionY += speed * Math.sin(angleRad);
 
-  
     // Wrap around when crossing any edge
+    //Wrapping around x-axis
     if (positionX > containerWidth) {
-      positionX -= (containerWidth + spaceshipWidth); // Reappear on left
-      // Adjust Y to maintain trajectory
+      positionX -= (containerWidth + spaceshipWidth);
       positionY -= (containerWidth + spaceshipWidth) * Math.tan(angleRad);
     } else if (positionX < -spaceshipWidth) {
-      positionX += (containerWidth + spaceshipWidth); // Reappear on right
+      positionX += (containerWidth + spaceshipWidth); 
       positionY += (containerWidth + spaceshipWidth) * Math.tan(angleRad);
     }
 
-  if (positionY > containerHeight) {
-    positionY -= (containerHeight + spaceshipHeight); // Reappear on top
-    // Adjust X to maintain trajectory
-    positionX -= (containerHeight + spaceshipHeight) / Math.tan(angleRad || 0.0001); // Avoid division by zero
-  } else if (positionY < -spaceshipHeight) {
-    positionY += (containerHeight + spaceshipHeight); // Reappear on bottom
-    positionX += (containerHeight + spaceshipHeight) / Math.tan(angleRad || 0.0001);
-  }
+    //Wrapping around y-axis
+    if (positionY > containerHeight) {
+      positionY -= (containerHeight + spaceshipHeight);
+      positionX -= (containerHeight + spaceshipHeight) / Math.tan(angleRad || 0.0001);
+    } else if (positionY < -spaceshipHeight) {
+      positionY += (containerHeight + spaceshipHeight);
+      positionX += (containerHeight + spaceshipHeight) / Math.tan(angleRad || 0.0001);
+    }
 
-    // Ensure positions stay within reasonable bounds to prevent drift
     positionX = Math.max(-spaceshipWidth, Math.min(positionX, containerWidth));
     positionY = Math.max(-spaceshipHeight, Math.min(positionY, containerHeight));
 
-    // Apply the new position to the spaceship
-    if (!isEditingGame) {
-      spaceship.style.left = positionX + 'px';
-      spaceship.style.top = positionY + 'px';
-    } else {
-      spaceship.style.left = positionX + 'px';
-      spaceship.style.top = positionY + 'px';
-    }
+    spaceship.style.left = positionX + 'px';
+    spaceship.style.top = positionY + 'px';
 
-
-    // Continue the animation
     requestAnimationFrame(moveSpaceship);
   }
 }
 
+// -----------------//
+//  STOP SPACESHIP  //
+// -----------------//
 function handleClick() {
   if (!isEditing.value) {
     stopspaceship = true;
@@ -87,31 +57,23 @@ function handleClick() {
     const spaceshipRect = spaceship.getBoundingClientRect();
     const helipadRect = helipad.getBoundingClientRect();
 
-    // Get center positions
+    // Get Center Postions 
     const spaceshipCenterX = spaceshipRect.left + (spaceshipRect.width / 2);
     const spaceshipCenterY = spaceshipRect.top + (spaceshipRect.height / 2);
 
     const helipadCenterX = helipadRect.left + (helipadRect.width / 2);
     const helipadCenterY = helipadRect.top + (helipadRect.height / 2);
 
-    const xRange = 40;
-    const yRange = 40;
-
-    const withinX = Math.abs(spaceshipCenterX - helipadCenterX) <= xRange;
-    const withinY = Math.abs(spaceshipCenterY - helipadCenterY) <= yRange;
+    const withinX = Math.abs(spaceshipCenterX - helipadCenterX) <= 40;
+    const withinY = Math.abs(spaceshipCenterY - helipadCenterY) <= 40;
 
     if (withinX && withinY) {
-      console.log('win');
       playSound(winSound);
-      //Update background to show win screen
       winbackground.style.zIndex = globalZIndex + 1;
       winbackground.style.display = "block"
-      
       btnDiv.style.display = 'none';
       gameWon = true;
-      
     } else {
-      console.log('Missed!');
       playSound(wrongSound);
       setTimeout(() => {
         stopspaceship = false;
@@ -121,6 +83,9 @@ function handleClick() {
   }
 }
 
+// -----------------//
+//   COLOR CHANGE  //
+// ---------------//
 function initColorChange() {
 
   if (stopButton && stopButtonColorPicker) {
@@ -139,14 +104,20 @@ function initColorChange() {
 }
 
 
+// -------------------------------- //
+//  HELPER FUCTIONS FOR ROTATION   //
+// -------------------------------//
+function updateCenter() {
+  const rect = spaceship.getBoundingClientRect();
+  centerX = rect.left + rect.width / 2;
+  centerY = rect.top + rect.height / 2;
+}
 
+function getAngleDegrees(x, y) {
+  let angle = Math.atan2(y - centerY, x - centerX) * (180 / Math.PI);
+  return (angle + 360) % 360;
+}
 
-const speedInput = document.getElementById('speedInput');
-const decreaseSpeedBtn = document.getElementById('decreaseSpeedBtn');
-const increaseSpeedBtn = document.getElementById('increaseSpeedBtn');
-
-// Initialize speed value
-let currentSpeed = parseFloat(speedInput.value);
 
 const sendPM = () => {
   if (areChangesSaved.value) {
@@ -155,27 +126,61 @@ const sendPM = () => {
   }
 };
 
-// --------- //
-//  GENERAL  //
-// --------- //
 
-let globalZIndex = 1000;
-let inEdit = false;
-let currSelectedElement = { value: null };
-let gameWon = false;
-
+// ----------- //
+//  ELEMENTS  //
+// ----------//
 const stopButtonColorPicker = document.getElementById('stopButtonColor');
 const stopButtonTextColorPicker = document.getElementById('stopButtonTextColor');
 const stopButton = document.getElementById('stopSpaceship');
 const rotateBtn = document.getElementById('rotateBtn');
+const spaceship = document.getElementById('spaceshipdiv');
+const gameContainer = document.querySelector('.game-container');
+const helipad = document.getElementById('helipaddiv');
+const winbackground = document.getElementById('winbackground');
+const speedInput = document.getElementById('speedInput');
+const decreaseSpeedBtn = document.getElementById('decreaseSpeedBtn');
+const increaseSpeedBtn = document.getElementById('increaseSpeedBtn');
 let stopspaceshipbtn = document.getElementById('stopButtonDiv');
 
-// Elements
+// Initial position and speed
+let positionX = 0; 
+let positionY = 427; 
+let speed = 7.5; 
+
+//handles spaceship movement
+let stopspaceship = false;
+
+// ----------- //
+//   ARRAYS   //
+// ----------//
 let items = [document.getElementById("btn"), document.getElementById("spaceship") , document.getElementById("helipad") , document.getElementById('stopSpaceship')];
 let itemDivs = [document.getElementById("btnDiv"), spaceship , helipad , stopspaceshipbtn];
 let resizeBoxes = [];
-let isItemCollected = [];
+let bgimagesrc = background.src;
 
+
+// --------------------//
+//   GAME VARIABLES   //
+// ------------------//
+
+// Get the boundaries of the game container
+const containerWidth = gameContainer.clientWidth;
+const spaceshipWidth = spaceship.clientWidth;
+const containerHeight = gameContainer.clientHeight;
+const spaceshipHeight = spaceship.clientHeight;
+
+
+// Changing Speed variable
+let currentSpeed = parseFloat(speedInput.value);
+
+// ------------------- //
+//  GENERAL VARIABLES  //
+// ------------------- //
+let globalZIndex = 1000;
+let inEdit = false;
+let currSelectedElement = { value: null };
+let gameWon = false;
 
 // ------ //
 //  DRAG  //
@@ -297,9 +302,6 @@ if (snapshot !== "true" && snapshot !== true) {
   moveSpaceship();
   stopspaceshipbtn.addEventListener('click', handleClick);
 
-
-  
-
   // Resize Boxes
   for (let i = 0; i < items.length; i++) {
     const tl = document.getElementById(`resizeBox${i}TL`);
@@ -320,7 +322,6 @@ if (snapshot !== "true" && snapshot !== true) {
     audioInputs.push(document.getElementById(`audioInput${i}`));
     audioElements.push(document.getElementById(`audioElement${i}`));
   }
-
 
   for (let i = 0; i < itemDivs.length; i++) {
     itemDivs[i].addEventListener("mousedown", (e) => {
@@ -345,7 +346,7 @@ if (snapshot !== "true" && snapshot !== true) {
   editModeBtns.push(saveBtn);
 
   // Add event listeners for edit mode buttons
-  const editModeParams = { cursorType, clickSound, isEditing, items, resizeBoxes, isItemCollected, showTooltip, isTooltipOpen, btnDiv, editModeBtns, currSelectedElement, settingsScreen, btnClicks, binTooltip, binTooltipRectangle, refreshBtn };
+  const editModeParams = { cursorType, clickSound, isEditing, items, resizeBoxes, showTooltip, isTooltipOpen, btnDiv, editModeBtns, currSelectedElement, settingsScreen, btnClicks, binTooltip, binTooltipRectangle, refreshBtn };
 
   // Handle edit mode button click
   editModeBtn.addEventListener("click", () => {
@@ -363,62 +364,31 @@ if (snapshot !== "true" && snapshot !== true) {
      rotateBtn.style.visibility = 'hidden';
     }
   });
-  
-  // Get the center point of the spaceship element
-  function updateCenter() {
-    const rect = spaceship.getBoundingClientRect();
-    centerX = rect.left + rect.width / 2;
-    centerY = rect.top + rect.height / 2;
-  }
 
-  // Calculate angle between two points in degrees (0-360)
-  function getAngleDegrees(x, y) {
-    // Calculate angle in radians, then convert to degrees
-    let angle = Math.atan2(y - centerY, x - centerX) * (180 / Math.PI);
-    
-    // Convert to 0-360 range
-    angle = (angle + 360) % 360;
-    
-    return angle;
-  }
 
+  // Rotation Functionality
   rotateBtn.addEventListener('mousedown', (e) => {
     if (isEditing.value) {
       isRotating = true;
-      updateCenter(); // Get current center of the spaceship
+      updateCenter();
       previousAngle = getAngleDegrees(e.clientX, e.clientY);
-      
-      // Store the starting mouse position
-      startX = e.clientX;
-      startY = e.clientY;
-      
-      e.preventDefault(); // Prevent default behaviors
-      
-      // Add a class to indicate rotation mode (optional - for visual feedback)
-      spaceship.classList.add('rotating');
+      e.preventDefault(); 
     }
   });
 
   document.addEventListener('mousemove', (e) => {
     if (isRotating && isEditing.value) {
-      // Get current angle of the mouse relative to the center
       const currentMouseAngle = getAngleDegrees(e.clientX, e.clientY);
-      
-      // Calculate the difference between current and previous angle
       let angleDelta = currentMouseAngle - previousAngle;
-      
-      // Handle the case when crossing the 0/360 boundary
+
       if (angleDelta > 180) angleDelta -= 360;
       if (angleDelta < -180) angleDelta += 360;
       
-      // Update the total rotation angle
       currentAngle = (currentAngle + angleDelta) % 360;
+
       if (currentAngle < 0) currentAngle += 360;
-      
-      // Apply the rotation - use only rotation, not translation
+
       spaceship.style.transform = `rotate(${currentAngle}deg)`;
-      
-      // Save current angle for next movement
       previousAngle = currentMouseAngle;
     }
   });
@@ -426,40 +396,29 @@ if (snapshot !== "true" && snapshot !== true) {
   document.addEventListener('mouseup', () => {
     if (isRotating) {
       isRotating = false;
-
-      spaceship.classList.remove('rotating');
-      
       spaceship.dataset.rotation = currentAngle;
     }
   });
 
-  // Update center when window resizes or element changes
-  window.addEventListener('resize', updateCenter);
-
-
   refreshBtn.addEventListener("click", () => {
     gameWon = false;
-
-    positionX = parseInt(spaceship.style.left); // removes 'px'
-    positionY = parseInt(spaceship.style.top);  // removes 'px'
-
-
-    console.log(positionX);
-    console.log(positionY);
-
-    playSound(clickSound);
-    winbackground.style.display ="none";
-    btnDiv.style.display = "block";
     stopspaceship = false;
     isEditing.value = false;
+
+    positionX = parseInt(spaceship.style.left); 
+    positionY = parseInt(spaceship.style.top);
+    
+    winbackground.style.display ="none";
+    btnDiv.style.display = "block";
+    
     speed = currentSpeed;
+    
+    playSound(clickSound);
     moveSpaceship();
   });
 
-  document.addEventListener('DOMContentLoaded', () => {
-    initColorChange();
-  });
-  
+  // handle colour change
+  initColorChange();
 
   // Game Settings
   bgImgInput.addEventListener("change", (e) => {
