@@ -27,6 +27,10 @@
         <!-- Background -->
         <img id="background" style="position: absolute; left: 0px; top: 0px" src="./assets/background.webp" style="z-index: 9" width="1024" height="1024" />
 
+        <!-- win Background -->
+        <img id="winbackground" style="position: absolute; left: 0px; top: 0px; display: none;" src="./assets/winScreen.webp" style="z-index: 500;" width="1024" height="1024" />
+
+
         <!-- Information Screen -->
         <img id="gameTooltip" src="assets/instructionsTemplate.webp" style="position: absolute; left: 0px; top: 0px; z-index: 0; display: none" width="1024" height="1024" />
 
@@ -85,8 +89,16 @@
             <div id="resizeBox1TR" style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red"></div>
             <div id="resizeBox1BL" style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red"></div>
             <div id="resizeBox1BR" style="position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red"></div>
-  
+            <img id="rotateBtn" src="./assets/rotate.webp" style="position: absolute; right: -30px; top: 60px; width: 30px; height: 30px; visibility: hidden; cursor: pointer; z-index: 4001" />
             <img id="spaceship" src="./assets/spaceship_right.webp" style="border: 1px solid transparent" width="150px" height="150px" />
+          </div>
+
+          <div id="stopButtonDiv" style="position: absolute; left: 390px; top: 900px;">
+            <div id="resizeBox3TL" style="position: absolute; left: -6px; top: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red"></div>
+            <div id="resizeBox3TR" style="position: absolute; right: -6px; top: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red"></div>
+            <div id="resizeBox3BL" style="position: absolute; left: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nesw-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red"></div>
+            <div id="resizeBox3BR" style="position: absolute; right: -6px; bottom: -6px; width: 14px; height: 14px; cursor: nwse-resize; visibility: hidden; border-radius: 100%; background-color: white; border: 1px solid red"></div>
+            <button id="stopSpaceship" style="padding: 10px 20px; font-size: 22px; cursor: pointer; border: 1px solid transparent">Stop Spaceship</button>
           </div>
 
         </div>
@@ -116,6 +128,27 @@
               <input type="number" id="speedInput" min="1" max="12" value="7.5" class="speed-input" style="width: 60px; margin: 0 10px; text-align: center;" readonly />
               <button id="increaseSpeedBtn" class="speedbutton" style="width: 60px; height: 60px; font-size: 27px;">+</button>
             </div>
+          </div>
+
+          <!-- Button Color Section -->
+          <div class="settings-section">
+            <h1 class="settings-section-title">Stop Button Color</h1>
+            <div class="color-selection-row">
+              <h2 class="color-selection-label">Button Color</h2>
+              <div class="color-selection-controls">
+                <input type="color" id="stopButtonColor" value="#fca709" class="color-picker" />
+                <span class="color-label">Select Color</span>
+              </div>
+            </div>
+
+            <div class="color-selection-row">
+              <h2 class="color-selection-label">Text Color</h2>
+              <div class="color-selection-controls">
+                <input type="color" id="stopButtonTextColor" value="#ffffff" class="color-picker" />
+                <span class="color-label">Select Text Color</span>
+              </div>
+            </div>
+
           </div>
 
           <!-- Tooltip Section -->
@@ -229,39 +262,6 @@
           <div style="margin-bottom: 250px"></div>
         </form>
 
-        <!-- Items Addition Screen -->
-        <!-- Add New Word and Letter Screen -->
-        <div id="itemsAddition" class="itemAddScreen">
-          <span id="itemsAdditionCloseBtn" class="close-icon">×</span>
-
-          <!-- Add New Word Section -->
-          <h1 class="settings-section-title">Add a New Word</h1>
-
-          <div class="image-upload-container">
-            <img id="addableImg" src="./assets/images/questionMark.webp" class="image-upload-preview" />
-            <label for="addableImgInput" class="custom-button">Upload Image</label>
-            <input type="file" id="addableImgInput" accept="image/*" class="image-upload-input" />
-
-            <!-- Input Field for Word -->
-            <input type="text" id="wordInput" class="word-input" placeholder="Word" />
-          </div>
-
-          <!-- Add Button for Word -->
-          <label id="addItemBtn" type="submit" class="save-button">Add</label>
-
-          <!-- Add New Letter Section -->
-          <h1 class="settings-section-title">Add a New Letter</h1>
-
-          <div class="letter-input-container">
-            <!-- Input Field for Letter -->
-            <input type="text" id="letterInput" class="letter-input" placeholder="Letter" maxlength="1" />
-          </div>
-
-          <!-- Add Button for Letter -->
-          <label id="addLetterBtn" type="submit" class="save-button">Add</label>
-
-          <div style="margin-bottom: 200px"></div>
-        </div>
 
         <!-- Context Menu -->
         <div id="contextMenu" style="width: fit-content; z-index: 9999; font-weight: 250; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 30px; padding: 15px; display: none; background-color: rgb(30, 30, 30); color: #d3d3d3; border: 1px solid #d3d3d3">

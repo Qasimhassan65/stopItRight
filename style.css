@@ -465,6 +465,7 @@ div {
   position: relative; /* Allows absolute positioning of children (helipad and spaceship) */
   width: 100%; /* Full viewport width to match the background */
   height: 100%; /* Full viewport height */
+  overflow: hidden;
 }
 
 /* Styling for the helipad */
@@ -570,6 +571,66 @@ div {
 #increaseSpeedBtn:active,
 #decreaseSpeedBtn:active {
   transform: scale(0.95); /* Slight scale on click for feedback */
+}
+
+
+#stopSpaceship {
+  padding: 12px 25px;
+  font-size: 16px;
+  font-weight: bold;
+  color: rgb(255, 255, 255);
+  background-color: #fca709;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  box-shadow: 0 6px 14px rgba(192, 57, 43, 0.4);
+  transition: background-color 0.3s, box-shadow 0.3s;
+}
+
+
+
+/* Container Colors Section */
+.color-selection-row {
+  margin-bottom: 20px;
+  padding: 20px;
+  border: 1px solid #feb781;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  background: linear-gradient(to right, #ff9900, #ffcc66);
+}
+
+.color-selection-label {
+  flex: 1;
+  font-family: "Comfortaa", cursive;
+  font-size: 40px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: #292b5b;
+}
+
+.color-selection-controls {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 15px;
+}
+
+.color-picker {
+  width: 60px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+}
+
+.color-label {
+  font-family: "Comfortaa", cursive;
+  font-size: 24px;
+  color: #292b5b;
 }
 
 

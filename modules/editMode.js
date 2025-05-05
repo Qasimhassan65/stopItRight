@@ -5,7 +5,7 @@ import { playSound, hideScreen, showScreen } from "./utils.js";
 // ----------- //
 export const handleEditModeButtonClick = (params) => {
   playSound(params.clickSound);
- 
+
   // Disable Editing Mode
   if (params.isEditing.value) {
     params.isEditing.value = false;
@@ -15,10 +15,6 @@ export const handleEditModeButtonClick = (params) => {
       params.refreshBtn.style.display = "block";
     }
 
-    // if (params.refreshBtn) {
-    //   params.refreshBtn.style.display = "none";
-    // }
-
     // Hide the bin tooltip
     if (params.btnClicks !== null && params.btnClicks !== undefined) {
       params.binTooltip.style.display = "none";
@@ -26,23 +22,14 @@ export const handleEditModeButtonClick = (params) => {
     }
 
     // Make the title & the description non-editable
-    // title.contentEditable = false;
-    // description.contentEditable = false;
-
     title.style.border = description.style.border = "2px solid transparent";
 
     // Update the item styles
     for (let i = 0; i < params.items.length; i++) {
-      if (params.game === "cypher" || params.game === "skeleton" || params.game === "wrh") {
-        params.items[i].style.cursor = params.items[i].id.includes("symbol") ? "default" : "grab";
-      } else {
-        params.items[i].style.cursor = params.cursorType;
-      }
-
+      // Set cursor to "pointer" for all items to indicate non-draggable state
+      params.items[i].style.cursor = "pointer";
       params.items[i].style.border = "1px solid transparent";
     }
-
-    params.items[0].style.cursor = "pointer";
 
     // Remove the Button's Resize boxes
     if (params.showTooltip.value) {
@@ -67,7 +54,6 @@ export const handleEditModeButtonClick = (params) => {
       hideScreen(params.settingsScreen);
     }
   }
-
   // Enable Editing Mode
   else {
     params.isEditing.value = true;
@@ -76,11 +62,6 @@ export const handleEditModeButtonClick = (params) => {
     if (params.refreshBtn) {
       params.refreshBtn.style.display = "none";
     }
-
-    // Show refresh button
-    // if (params.refreshBtn) {
-    //   params.refreshBtn.style.display = "block";
-    // }
 
     // Show the bin tooltip
     if (params.btnClicks !== null && params.btnClicks !== undefined && params.btnClicks.value < 2) {
@@ -103,7 +84,6 @@ export const handleEditModeButtonClick = (params) => {
       title.style.border = description.style.border = "2px solid #9fabc7";
       params.btnDiv.style.cursor = "default";
     }
-
     // Game Tooltip is not open
     else {
       // Update the Item's styles

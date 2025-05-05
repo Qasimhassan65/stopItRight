@@ -14,10 +14,12 @@ const spaceship = document.getElementById('spaceshipdiv');
 const spaceshipImg = spaceship.querySelector('img'); // Select the img element inside the spaceship div
 const gameContainer = document.querySelector('.game-container');
 const helipad = document.getElementById('helipaddiv');
-const background = document.getElementById('background');
+const winbackground = document.getElementById('winbackground');
+let bgimagesrc = background.src;
 
 // Initial position and speed
-let positionX = 0; // Starting position from your HTML
+let positionX = 0; // Starting position from your HTML\
+let positionY = 427; // Starting Y position from your HTML
 let speed = 7.5; // Speed of the spaceship (adjust as needed)
 let direction = 1; // 1 for right, -1 for left
 let stopspaceship = false;
@@ -25,23 +27,52 @@ let stopspaceship = false;
 // Get the boundaries of the game container
 const containerWidth = gameContainer.clientWidth;
 const spaceshipWidth = spaceship.clientWidth;
+const containerHeight = gameContainer.clientHeight;
+const spaceshipHeight = spaceship.clientHeight;
 
 
 // Animation loop to move the spaceship
 function moveSpaceship() {
   if (!stopspaceship && !isEditing.value) {
-    console.log(speed);    
-    // Update position
-    positionX += speed;
+    // Convert angle to radians for trigonometric calculations
+    const angleRad = currentAngle * (Math.PI / 180);
+    // Update position based on angle and speed
+    positionX += speed * Math.cos(angleRad);
+    positionY += speed * Math.sin(angleRad);
 
-    // Check for wrap-around when crossing the right edge
-    if (positionX >= containerWidth) {
-      positionX = -spaceshipWidth; // Reappear from the left
+  
+    // Wrap around when crossing any edge
+    if (positionX > containerWidth) {
+      positionX -= (containerWidth + spaceshipWidth); // Reappear on left
+      // Adjust Y to maintain trajectory
+      positionY -= (containerWidth + spaceshipWidth) * Math.tan(angleRad);
+    } else if (positionX < -spaceshipWidth) {
+      positionX += (containerWidth + spaceshipWidth); // Reappear on right
+      positionY += (containerWidth + spaceshipWidth) * Math.tan(angleRad);
     }
 
+  if (positionY > containerHeight) {
+    positionY -= (containerHeight + spaceshipHeight); // Reappear on top
+    // Adjust X to maintain trajectory
+    positionX -= (containerHeight + spaceshipHeight) / Math.tan(angleRad || 0.0001); // Avoid division by zero
+  } else if (positionY < -spaceshipHeight) {
+    positionY += (containerHeight + spaceshipHeight); // Reappear on bottom
+    positionX += (containerHeight + spaceshipHeight) / Math.tan(angleRad || 0.0001);
+  }
+
+    // Ensure positions stay within reasonable bounds to prevent drift
+    positionX = Math.max(-spaceshipWidth, Math.min(positionX, containerWidth));
+    positionY = Math.max(-spaceshipHeight, Math.min(positionY, containerHeight));
+
     // Apply the new position to the spaceship
-    if(!isEditingGame) spaceship.style.left = positionX + 'px';
-    else  spaceship.style.left = positionX+140 + 'px';
+    if (!isEditingGame) {
+      spaceship.style.left = positionX + 'px';
+      spaceship.style.top = positionY + 'px';
+    } else {
+      spaceship.style.left = positionX + 'px';
+      spaceship.style.top = positionY + 'px';
+    }
+
 
     // Continue the animation
     requestAnimationFrame(moveSpaceship);
@@ -63,7 +94,7 @@ function handleClick() {
     const helipadCenterX = helipadRect.left + (helipadRect.width / 2);
     const helipadCenterY = helipadRect.top + (helipadRect.height / 2);
 
-    const xRange = 80;
+    const xRange = 40;
     const yRange = 40;
 
     const withinX = Math.abs(spaceshipCenterX - helipadCenterX) <= xRange;
@@ -72,20 +103,42 @@ function handleClick() {
     if (withinX && withinY) {
       console.log('win');
       playSound(winSound);
-      // Update background to show win screen
-      background.style.zIndex = '500';
-      background.src = './assets/winScreen.webp';
-      btnDiv.style.display = 'none'
+      //Update background to show win screen
+      winbackground.style.zIndex = globalZIndex + 1;
+      winbackground.style.display = "block"
+      
+      btnDiv.style.display = 'none';
+      gameWon = true;
       
     } else {
       console.log('Missed!');
       playSound(wrongSound);
       setTimeout(() => {
-        location.reload(); // Refresh the page after 0.5 second
+        stopspaceship = false;
+        moveSpaceship();
       }, 500);
     }
   }
 }
+
+function initColorChange() {
+
+  if (stopButton && stopButtonColorPicker) {
+    stopButtonColorPicker.addEventListener('input', (event) => {
+      const color = event.target.value;
+      stopButton.style.backgroundColor = color;
+    });
+  }
+
+  if (stopButton && stopButtonTextColorPicker) {
+    stopButtonTextColorPicker.addEventListener('input', (event) => {
+      const textColor = event.target.value;
+      stopButton.style.color = textColor;
+    });
+  }
+}
+
+
 
 
 const speedInput = document.getElementById('speedInput');
@@ -95,56 +148,6 @@ const increaseSpeedBtn = document.getElementById('increaseSpeedBtn');
 // Initialize speed value
 let currentSpeed = parseFloat(speedInput.value);
 
-
-
-
-// ---------------- //
-//  ITEMS DELETION  //
-// ---------------- //
-const getDraggedItemIndex = () => {
-  // Get the item being dragged
-  for (let i = 0; i < allowItemMove.length; i++) {
-    if (allowItemMove[i]) {
-      allowItemMove[i] = isDragging.value = false;
-      return i;
-    }
-  }
-
-  return null;
-};
-
-
-// const handleChangeImage = (event, itemIndex, params) => {
-//   const wordItem = params.items[itemIndex];
-//   const match = wordItem?.id.match(/wordscontaineritem(\d+)/);
-//   if (!wordItem?.id.startsWith("wordscontaineritem") || !match) return;
-
-//   const wordId = parseInt(match[1], 10);
-//   const imageElement = document.getElementById(`worditem${wordId}Image`);
-//   const file = event.target.files?.[0];
-//   if (!imageElement || !file) return;
-
-//   const oldImagePath = imageElement.src;
-//   const reader = new FileReader();
-
-//   reader.onload = () => {
-//     const newImagePath = reader.result;
-//     imageElement.src = newImagePath;
-
-//     const wordText = document.getElementById(`worditem${wordId}Text`)?.textContent.trim();
-//     const dictIndex = params.wordindexs[wordId - 1] ?? params.gameDictionary.findIndex((entry) => entry.imagePath === oldImagePath || (wordText && entry.text.toUpperCase() === wordText.toUpperCase()));
-
-//     if (dictIndex !== -1) params.gameDictionary[dictIndex].imagePath = newImagePath;
-//     else if (wordId > 0 && !params.wordindexs.includes(wordId - 1)) {
-//       params.gameDictionary.push({ text: wordText || "", imagePath: newImagePath });
-//       params.wordindexs[wordId - 1] = params.gameDictionary.length - 1;
-//     }
-//   };
-
-//   reader.readAsDataURL(file);
-// };
-
-
 const sendPM = () => {
   if (areChangesSaved.value) {
     window.parent.postMessage({ type: "unsaved changes", gameId: urlParams.get("gameid"), url: window.location.origin }, parentUrl);
@@ -152,56 +155,27 @@ const sendPM = () => {
   }
 };
 
-//upadted code
-function toggleButtonState(inputId, buttonId) {
-
-  const input = document.getElementById(inputId);
-  const button = document.getElementById(buttonId);
-
-  // Initial check on page load
-  if (input.value.trim() !== "") button.classList.add("enabled");
-  else button.classList.remove("enabled");
-
-  // Add event listener for input changes
-  input.addEventListener("input", () => {
-    if (input.value.trim() !== "") button.classList.add("enabled");
-    else button.classList.remove("enabled");
-  });
-}
-
 // --------- //
 //  GENERAL  //
 // --------- //
-const gameDictionary = [
-  { text: "apple", imagePath: "./assets/apple.webp" },
-  { text: "juice", imagePath: "./assets/juice.webp" },
-  { text: "bread", imagePath: "./assets/bread.webp" },
-  { text: "cat", imagePath: "./assets/cat.webp" },
-  { text: "icecream", imagePath: "./assets/icecream.webp" },
-  { text: "pizza", imagePath: "./assets/pizza.webp" },
-  { text: "lollipop", imagePath: "./assets/lollipop.webp" },
-  { text: "noodle", imagePath: "./assets/noodle.webp" },
-];
-
-const letterlist = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
 
 let globalZIndex = 1000;
 let inEdit = false;
-let wordindexs = [];
-let worditemcounter = 4;
-let lettercounter = 0;
 let currSelectedElement = { value: null };
 let gameWon = false;
-let currentDragOverHandler = null;
-let currentDropHandler = null;
+
+const stopButtonColorPicker = document.getElementById('stopButtonColor');
+const stopButtonTextColorPicker = document.getElementById('stopButtonTextColor');
+const stopButton = document.getElementById('stopSpaceship');
+const rotateBtn = document.getElementById('rotateBtn');
+let stopspaceshipbtn = document.getElementById('stopButtonDiv');
 
 // Elements
-let items = [document.getElementById("btn"), document.getElementById("spaceship") , document.getElementById("helipad")];
-let itemDivs = [document.getElementById("btnDiv"), spaceship , helipad];
+let items = [document.getElementById("btn"), document.getElementById("spaceship") , document.getElementById("helipad") , document.getElementById('stopSpaceship')];
+let itemDivs = [document.getElementById("btnDiv"), spaceship , helipad , stopspaceshipbtn];
 let resizeBoxes = [];
 let isItemCollected = [];
-let remainingItems = 4;
-let delItemCount = 0;
+
 
 // ------ //
 //  DRAG  //
@@ -250,11 +224,15 @@ const btnBlack = document.getElementById("btnBlack");
 let isEditing = { value: false };
 let btnClicks = { value: 1 };
 let editModeBtns = [];
+let isRotating = false;
+let currentAngle = 0;
+let centerX = 0;
+let centerY = 0;
+let previousAngle = 0; 
+
 
 const editModeBtn = document.getElementById("editModeBtn");
-const addItemsBtn = document.getElementById("addItemsBtn");
 const refreshBtn = document.getElementById("refreshBtn");
-const deleteBtn = document.getElementById("deleteBtn");
 
 const binTooltip = document.getElementById("binTooltip");
 const binTooltipRectangle = document.getElementById("binTooltipRectangle");
@@ -269,17 +247,6 @@ const settingsScreen = document.getElementById("settingsScreen");
 const bgImg = document.getElementById("bgImage");
 const bgImgInput = document.getElementById("bgImgInput");
 
-// ---------------- //
-//  ITEMS ADDITION  //
-// ---------------- //
-let isAddingItems = { value: false };
-const addItemBtn = document.getElementById("addItemBtn");
-
-const itemsAdditionCloseBtn = document.getElementById("itemsAdditionCloseBtn");
-const itemsAdditionScreen = document.getElementById("itemsAddition");
-
-const addableImg = document.getElementById("addableImg");
-const addableImgInput = document.getElementById("addableImgInput");
 
 // -------------- //
 //  CONTEXT MENU  //
@@ -328,7 +295,8 @@ if (snapshot !== "true" && snapshot !== true) {
   // ------------------- //
 
   moveSpaceship();
-  gameContainer.addEventListener('click', handleClick);
+  stopspaceshipbtn.addEventListener('click', handleClick);
+
 
   
 
@@ -344,15 +312,7 @@ if (snapshot !== "true" && snapshot !== true) {
   }
 
   
-
-
-  // Add event listeners for adding items
-  addItemBtn.addEventListener("click", () => addItem("wordInput", true, addWordItemOnScreen));
-  addLetterBtn.addEventListener("click", () => addItem("letterInput", false, addLetterItemOnScreen));
-  
-
   // Audios
-  
   playableAudios.push(clickSound);
   playableAudios.push(winSound);
   playableAudios.push(wrongSound);
@@ -362,12 +322,10 @@ if (snapshot !== "true" && snapshot !== true) {
     audioElements.push(document.getElementById(`audioElement${i}`));
   }
 
-  console.log(items);
-  console.log(itemDivs);
 
   for (let i = 0; i < itemDivs.length; i++) {
     itemDivs[i].addEventListener("mousedown", (e) => {
-      if (isTooltipOpen.value || !isEditing.value) return;
+      if (isTooltipOpen.value || !isEditing.value || isRotating) return;
       sendPM();
 
       handleDragStart(e, { i, targetDiv: itemDivs[i], isDragging, isResizing, gameWon, savedX, savedY, allowItemMove, teleporationFix, deltaX, deltaY, isEditing, type: i === 0 ? "button" : "item", placeBack: true, btnLastX, btnLastY });
@@ -399,36 +357,118 @@ if (snapshot !== "true" && snapshot !== true) {
 
     if (!wasEditing && isEditing.value) {
       [settingsScreen].forEach(hideScreen);
-
+      rotateBtn.style.visibility = 'visible';
     }
     else{
      isEditing.value = false;
+     rotateBtn.style.visibility = 'hidden';
+    }
+  });
+  
+  // Get the center point of the spaceship element
+  function updateCenter() {
+    const rect = spaceship.getBoundingClientRect();
+    centerX = rect.left + rect.width / 2;
+    centerY = rect.top + rect.height / 2;
+  }
+
+  // Calculate angle between two points in degrees (0-360)
+  function getAngleDegrees(x, y) {
+    // Calculate angle in radians, then convert to degrees
+    let angle = Math.atan2(y - centerY, x - centerX) * (180 / Math.PI);
+    
+    // Convert to 0-360 range
+    angle = (angle + 360) % 360;
+    
+    return angle;
+  }
+
+  rotateBtn.addEventListener('mousedown', (e) => {
+    if (isEditing.value) {
+      isRotating = true;
+      updateCenter(); // Get current center of the spaceship
+      previousAngle = getAngleDegrees(e.clientX, e.clientY);
+      
+      // Store the starting mouse position
+      startX = e.clientX;
+      startY = e.clientY;
+      
+      e.preventDefault(); // Prevent default behaviors
+      
+      // Add a class to indicate rotation mode (optional - for visual feedback)
+      spaceship.classList.add('rotating');
     }
   });
 
+  document.addEventListener('mousemove', (e) => {
+    if (isRotating && isEditing.value) {
+      // Get current angle of the mouse relative to the center
+      const currentMouseAngle = getAngleDegrees(e.clientX, e.clientY);
+      
+      // Calculate the difference between current and previous angle
+      let angleDelta = currentMouseAngle - previousAngle;
+      
+      // Handle the case when crossing the 0/360 boundary
+      if (angleDelta > 180) angleDelta -= 360;
+      if (angleDelta < -180) angleDelta += 360;
+      
+      // Update the total rotation angle
+      currentAngle = (currentAngle + angleDelta) % 360;
+      if (currentAngle < 0) currentAngle += 360;
+      
+      // Apply the rotation - use only rotation, not translation
+      spaceship.style.transform = `rotate(${currentAngle}deg)`;
+      
+      // Save current angle for next movement
+      previousAngle = currentMouseAngle;
+    }
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isRotating) {
+      isRotating = false;
+
+      spaceship.classList.remove('rotating');
+      
+      spaceship.dataset.rotation = currentAngle;
+    }
+  });
+
+  // Update center when window resizes or element changes
+  window.addEventListener('resize', updateCenter);
+
+
   refreshBtn.addEventListener("click", () => {
     gameWon = false;
-    positionX = 0;
-    background.style.zIndex = '1';
-    background.src = './assets/background.webp';
-    spaceship.style.zIndex = '3';
-    helipad.style.zIndex = '2';
+
+    positionX = parseInt(spaceship.style.left); // removes 'px'
+    positionY = parseInt(spaceship.style.top);  // removes 'px'
+
+
+    console.log(positionX);
+    console.log(positionY);
+
     playSound(clickSound);
+    winbackground.style.display ="none";
+    btnDiv.style.display = "block";
     stopspaceship = false;
     isEditing.value = false;
+    speed = currentSpeed;
     moveSpaceship();
   });
 
-  addItemsBtn.addEventListener("click", () => handleAddItemsButtonClick({ isAddingItems, itemsAdditionScreen, cleanUp: false, clickSound, settingsScreen, saveScreen }));
-  itemsAdditionCloseBtn.addEventListener("click", () => handleAddItemsCloseButtonClick({ clickSound, isAddingItems, itemsAdditionScreen }));
+  document.addEventListener('DOMContentLoaded', () => {
+    initColorChange();
+  });
+  
 
   // Game Settings
   bgImgInput.addEventListener("change", (e) => {
     sendPM();
-    handleSingleImageUpload(e, { targetImg: background, newImg: bgImg });
+    handleSingleImageUpload(e, { targetImg: background, newImg: bgImg, bgimagesrc });
   });
 
-  settingsBtn.addEventListener("click", () => handleSettingsButtonClick({ isAddingItems, itemsAdditionScreen, cleanUp: false, clickSound, settingsScreen, saveScreen }));
+  settingsBtn.addEventListener("click", () => handleSettingsButtonClick({ cleanUp: false, clickSound, settingsScreen, saveScreen }));
   settingsCloseBtn.addEventListener("click", () => handleSettingsCloseButtonClick({ clickSound, settingsScreen }));
 
   // Button
@@ -480,32 +520,18 @@ if (snapshot !== "true" && snapshot !== true) {
     });
   }
 
-  let tooltipTimeout; // Variable to store timeout reference
 
   // Mouse enter
   editModeBtn.addEventListener("mouseenter", () => handleUpScaling(editModeBtn));
-  addItemsBtn.addEventListener("mouseenter", () => handleUpScaling(addItemsBtn));
   settingsBtn.addEventListener("mouseenter", () => handleUpScaling(settingsBtn));
   saveBtn.addEventListener("mouseenter", () => handleUpScaling(saveBtn));
-
-  deleteBtn.addEventListener("mouseenter", () => {
-    handleUpScaling(deleteBtn);
-    tooltipTimeout = setTimeout(() => (binTooltip.style.display = binTooltipRectangle.style.display = "block"), 500);
-  });
 
   refreshBtn.addEventListener("mouseenter", () => handleUpScaling(refreshBtn));
 
   // Mouse leave
   editModeBtn.addEventListener("mouseleave", () => handleDownScaling(editModeBtn));
-  addItemsBtn.addEventListener("mouseleave", () => handleDownScaling(addItemsBtn));
   settingsBtn.addEventListener("mouseleave", () => handleDownScaling(settingsBtn));
   saveBtn.addEventListener("mouseleave", () => handleDownScaling(saveBtn));
-
-  deleteBtn.addEventListener("mouseleave", () => {
-    handleDownScaling(deleteBtn);
-    clearTimeout(tooltipTimeout); // Cancel showing tooltip if mouse leaves early
-    binTooltip.style.display = binTooltipRectangle.style.display = "none";
-  });
 
   
   // Update speed on button clicks
@@ -527,13 +553,10 @@ if (snapshot !== "true" && snapshot !== true) {
 
   refreshBtn.addEventListener("mouseleave", () => handleDownScaling(refreshBtn));
 
-
-
   // On Board Images Resizing
   for (let i = 0; i < resizeBoxes.length; i++) {
     resizeBoxes[i].addEventListener("mousedown", (e) => handleResizeStart(e, { i: parseInt(i / 4), direction: i % 4 === 0 ? "TL" : i % 4 === 1 ? "TR" : i % 4 === 2 ? "BL" : "BR", isResizing, lastScales, allowItemResize, resizeLastX, item: items[parseInt(i / 4)], itemDiv: itemDivs[parseInt(i / 4)], lastDirection, resizeScale }));
   }
-
 
   // Context Menu
     for (let i = 1; i < items.length; i++) {
@@ -571,7 +594,7 @@ if (snapshot !== "true" && snapshot !== true) {
   description.addEventListener("keydown", (e) => handleDescriptionKeyDown(e));
 
   // Save Game
-  saveBtn.addEventListener("click", () => handleSaveButtonClick({ isAddingItems, itemsAdditionScreen, cleanUp: false, clickSound, settingsScreen, saveScreen }));
+  saveBtn.addEventListener("click", () => handleSaveButtonClick({ cleanUp: false, clickSound, settingsScreen, saveScreen }));
   saveChangesBtn.addEventListener("click", (e) => saveGame(e, "game data"));
 
   saveCloseBtn.addEventListener("click", () => handleSaveCloseButtonClick({ clickSound, saveScreen }));
