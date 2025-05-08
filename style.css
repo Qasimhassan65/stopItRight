@@ -489,7 +489,9 @@ div {
   position: absolute;
   width: 150px; /* Width of the spaceship */
   height: 150px; /* Height of the spaceship */
+  transform-origin: center center;
 }
+
 
 /* Styling for the spaceship image */
 #spaceship img {

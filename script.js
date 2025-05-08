@@ -109,13 +109,60 @@ function initColorChange() {
 // -------------------------------//
 function updateCenter() {
   const rect = spaceship.getBoundingClientRect();
-  centerX = rect.left + rect.width / 2;
-  centerY = rect.top + rect.height / 2;
+  spaceship.style.transformOrigin = 'center center';
+  const currentScale = lastScales[1] || 1.0; 
+  const scaledWidth = rect.width / currentScale;
+  const scaledHeight = rect.height / currentScale;
+  centerX = rect.left + (scaledWidth * currentScale) / 2;
+  centerY = rect.top + (scaledHeight * currentScale) / 2;
 }
 
 function getAngleDegrees(x, y) {
   let angle = Math.atan2(y - centerY, x - centerX) * (180 / Math.PI);
   return (angle + 360) % 360;
+}
+
+function handleChangeButtonText(itemIndex, params) {
+  const { items } = params;
+  const buttonDiv = items[itemIndex];
+  if (!buttonDiv?.id === "stopButtonDiv") {
+    console.error("Invalid item for changing text:", buttonDiv?.id);
+    return;
+  }
+
+  const button = document.getElementById("stopSpaceship");
+  if (!button) {
+    console.error("Button element not found");
+    return;
+  }
+
+  const oldText = button.textContent.trim();
+  button.contentEditable = true;
+  button.style.cssText = "border: 2px solid #007bff; background: rgb(9, 9, 9); padding: 10px 20px; color: rgb(254, 254, 254); font-size: 22px;";
+  button.focus();
+
+  const updateText = () => {
+    const newText = button.textContent.trim();
+    if (!newText) {
+      button.textContent = oldText; // Revert if empty
+    } else {
+      button.textContent = newText;
+    }
+    button.contentEditable = false;
+    button.style.cssText = "padding: 10px 20px; font-size: 22px; cursor: pointer; border: 1px solid transparent";
+    // Optionally notify parent of changes if needed
+    // sendPM();
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      button.blur();
+    }
+  };
+
+  button.addEventListener("blur", updateText, { once: true });
+  button.addEventListener("keydown", handleKeyDown, { once: true });
 }
 
 
@@ -134,7 +181,7 @@ const stopButtonColorPicker = document.getElementById('stopButtonColor');
 const stopButtonTextColorPicker = document.getElementById('stopButtonTextColor');
 const stopButton = document.getElementById('stopSpaceship');
 const rotateBtn = document.getElementById('rotateBtn');
-const spaceship = document.getElementById('spaceshipdiv');
+const   spaceship = document.getElementById('spaceshipdiv');
 const gameContainer = document.querySelector('.game-container');
 const helipad = document.getElementById('helipaddiv');
 const winbackground = document.getElementById('winbackground');
@@ -234,6 +281,7 @@ let currentAngle = 0;
 let centerX = 0;
 let centerY = 0;
 let previousAngle = 0; 
+spaceship.style.transformOrigin = 'center center';
 
 
 const editModeBtn = document.getElementById("editModeBtn");
@@ -266,6 +314,7 @@ let currentItemCM = null;
 const contextMenu = document.getElementById("contextMenu");
 const changeImageBtn = document.getElementById("changeImage");
 const changeImageInput = document.getElementById("changeImageInput");
+const changeTextBtn = document.getElementById("changeText");
 
 // -------- //
 //  AUDIOS  //
@@ -393,7 +442,8 @@ if (snapshot !== "true" && snapshot !== true) {
 
       if (currentAngle < 0) currentAngle += 360;
 
-      spaceship.style.transform = `rotate(${currentAngle}deg)`;
+      const currentScale = lastScales[1] || 1.0; // Assuming spaceship is at index 1 in lastScales
+      spaceship.style.transform = `scale(${currentScale}) rotate(${currentAngle}deg)`;
       previousAngle = currentMouseAngle;
     }
   });
@@ -402,6 +452,8 @@ if (snapshot !== "true" && snapshot !== true) {
     if (isRotating) {
       isRotating = false;
       spaceship.dataset.rotation = currentAngle;
+      const currentScale = lastScales[1] || 1.0;
+      spaceship.style.transform = `scale(${currentScale}) rotate(${currentAngle}deg)`;
     }
   });
 
@@ -528,14 +580,24 @@ if (snapshot !== "true" && snapshot !== true) {
   }
 
   // Context Menu
-    for (let i = 1; i < items.length; i++) {
-      items[i].addEventListener("contextmenu", (e) => {
-        currentItemCM = i;
-        handleItemContextMenu(e, { isEditing, contextMenu, changeImageBtn });
-      });
-    }
+  console.log("Items:", items);
+  for (let i = 0; i < items.length; i++) {
+    items[i].addEventListener("contextmenu", (e) => {
+      currentItemCM = i;
+      // Determine the type based on the item
+      const type = items[i].id === "stopSpaceship" ? "text" : "image";
+      handleItemContextMenu(e, { isEditing, contextMenu, changeImageBtn, type });
+      // Manually control changeTextBtn visibility
+      changeTextBtn.style.display = type === "text" ? "block" : "none";
+    });
+  }
   
     changeImageInput.addEventListener("change", (e) => handleChangeImageUpload(e, items[currentItemCM]));
+
+    changeTextBtn.addEventListener("click", () => {
+      handleChangeButtonText(currentItemCM, { items });
+      contextMenu.style.display = "none"; // Hide the context menu
+    });
   
     document.addEventListener("click", function () {
       contextMenu.style.display = "none";
